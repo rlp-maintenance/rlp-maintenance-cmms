@@ -1,0 +1,34 @@
+# Robo anti-hibernacao do Render.
+#
+# O plano Free do Render derruba a instancia depois de ~15 min sem nenhuma requisicao,
+# e a proxima visita fica 50s+ esperando a maquina subir. Este workflow bate no servico
+# a cada 10 minutos para que ele nunca chegue nesse limite.
+#
+# Bate em /api/ping de proposito: essa rota responde sem consultar o banco, entao o
+# Neon continua hibernando normalmente e nao queima horas de computacao a toa.
+name: Keep alive (Render)
+
+on:
+  schedule:
+    # A cada 10 minutos (horario UTC; o GitHub pode atrasar alguns minutos em picos).
+    - cron: "*/10 * * * *"
+  # Permite disparar na mao pela aba Actions para testar.
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Acordar o servico
+        run: |
+          url="https://rlp-maintenance-cmms.onrender.com/api/ping"
+          # 3 tentativas: se a instancia estiver dormindo, a primeira pode estourar o tempo
+          # enquanto o Render sobe a maquina.
+          for tentativa in 1 2 3; do
+            codigo=$(curl -s -o /tmp/resposta.txt -w "%{http_code}" --max-time 90 "$url" || echo "000")
+            echo "tentativa $tentativa: HTTP $codigo - $(cat /tmp/resposta.txt)"
+            if [ "$codigo" = "200" ]; then exit 0; fi
+            sleep 15
+          done
+          echo "servico nao respondeu 200 depois de 3 tentativas"
+          exit 1

@@ -807,7 +807,7 @@ export const runPlanGeneration = asyncHandler(async (req: Request, res: Response
 });
 
 /**
- * Interruptor da geracao automatica (a rodada por hora, sozinha) - da propria empresa.
+ * Interruptor da geracao automatica (a rodada periodica, sozinha) - da propria empresa.
  * Quem decide se quer ligado e' o cliente, na tela de Planos preventivos dele; a OptiProcess
  * nao mexe nisso pela Gestao. "Rodar agora" continua liberado mesmo com isso pausado: aqui
  * e' so o piloto automatico, nao a geracao em si.

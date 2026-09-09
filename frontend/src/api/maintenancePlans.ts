@@ -141,7 +141,7 @@ export async function atribuirAtivosAoPlano(id: string, instrumentIds: string[])
   return data;
 }
 
-/** Roda a geracao automatica agora, em vez de esperar a proxima passada horaria. */
+/** Roda a geracao automatica agora, em vez de esperar a proxima passada automatica. */
 export async function runPlanGeneration(): Promise<{
   avaliados: number;
   gerados: { planId: string; code: string | null; workOrderNumber: string }[];
@@ -184,7 +184,7 @@ export async function getMaintenancePlanAttachmentUrl(planId: string, attachment
 }
 
 // --------------------------------------------------------------------------
-// Interruptor geral da geracao automatica de OS (so ADMIN) - a rodada por hora que ja
+// Interruptor geral da geracao automatica de OS (so ADMIN) - a rodada periodica que ja
 // existia, agora com controle e prova de que rodou.
 // --------------------------------------------------------------------------
 
