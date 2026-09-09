@@ -1,10 +1,8 @@
 /**
- * Marca do RLP Maintenance CMMS - o arquivo oficial da marca, nao uma recriacao.
+ * Marca do RLP Maintenance - o arquivo oficial da marca, nao uma recriacao.
  *
- * O CMMS e' um produto vendido a parte, com identidade propria - por isso tem marca
- * separada da OptiProcess. A regra: OptiProcess continua sendo a marca principal do site,
- * do login e do sistema de gestao; a marca do CMMS aparece onde o assunto e' o produto
- * (paineis do CMMS, portal de quem assinou o CMMS e a pagina do servico no site).
+ * E' a unica marca do produto: login, barra lateral da gestao e portal do cliente usam
+ * este componente em todo lugar - nao ha mais uma marca separada para o sistema de gestao.
  *
  * Dois arquivos em /public/brand, gerados a partir do PNG original da marca:
  *   rlp-maintenance.png        cores originais, fundo transparente (para fundo claro)
@@ -16,7 +14,7 @@
 interface CmmsLogoProps {
   /** "light" = para fundo escuro (sidebar, hero); "dark" = para fundo claro. */
   variant?: "light" | "dark";
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg" | "xl";
   className?: string;
 }
 
@@ -24,6 +22,7 @@ const SIZES: Record<NonNullable<CmmsLogoProps["size"]>, string> = {
   sm: "h-8",
   md: "h-11",
   lg: "h-16",
+  xl: "h-32",
 };
 
 export function CmmsLogo({ variant = "dark", size = "md", className = "" }: CmmsLogoProps) {

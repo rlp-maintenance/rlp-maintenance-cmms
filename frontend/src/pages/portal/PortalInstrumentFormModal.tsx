@@ -310,11 +310,11 @@ export function PortalInstrumentFormModal({ open, onClose, onSaved, instrument, 
         <div className="space-y-3 rounded-lg border border-gray-200 p-4">
           <p className="text-sm font-medium text-graphite-700">Este ativo participa de</p>
           <CheckboxInput
-            label="Calibracao - envia para a OptiProcess calibrar"
+            label="Calibracao - rastreia frequencia e vencimento de calibracao"
             {...register("calibratable")}
           />
           <p className="-mt-1 pl-6 text-xs text-graphite-500">
-            Ao marcar, o ativo entra na lista de calibracao da OptiProcess. Depois e' preciso criar o plano de
+            Ao marcar, o ativo passa a rastrear calibracao periodica. Depois e' preciso criar o plano de
             calibracao, que define de quanto em quanto tempo - a ficha lembra disso enquanto faltar.
           </p>
           <CheckboxInput

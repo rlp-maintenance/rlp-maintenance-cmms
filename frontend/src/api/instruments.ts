@@ -116,7 +116,6 @@ export interface ImpactoDaRemocao {
   ordens: number;
   planos: number;
   pontos: number;
-  calibracoes: number;
 }
 
 export async function getImpactoDaRemocao(id: string): Promise<ImpactoDaRemocao> {

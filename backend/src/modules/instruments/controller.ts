@@ -96,10 +96,9 @@ function ordenarPelaArvore<T extends { id: string; parentId: string | null; tag:
 }
 
 export const listInstruments = asyncHandler(async (req: Request, res: Response) => {
-  await assertServiceAccess(req, ["CALIBRATION", "CMMS_MAINTENANCE"]);
+  await assertServiceAccess(req, ["CMMS_MAINTENANCE"]);
   const pageParams = parsePageParams(req.query as Record<string, unknown>);
-  const { clientId, search, status, parentId, criticality, plantId, areaId, systemId, costCenterId, operationalStatus, scope } = req.query as {
-    scope?: string;
+  const { clientId, search, status, parentId, criticality, plantId, areaId, systemId, costCenterId, operationalStatus } = req.query as {
     clientId?: string;
     search?: string;
     status?: InstrumentStatus;
@@ -112,14 +111,6 @@ export const listInstruments = asyncHandler(async (req: Request, res: Response) 
     operationalStatus?: OperationalStatus;
   };
 
-  /**
-   * A OptiProcess presta calibracao; o CMMS e' do cliente. Por isso a lista de Ativos da
-   * equipe interna mostra so o que e' calibravel - a arvore de manutencao do cliente
-   * (linha, maquina, componente) nao e' assunto dela. scope=cmms pede a arvore completa,
-   * usado pelas telas do CMMS (o cliente, no portal, sempre ve tudo que e' dele).
-   */
-  const somenteCalibraveis = req.user?.role !== "CLIENT" && scope !== "cmms";
-
   const where = {
     deletedAt: null,
     ...resolveClientScope(req, clientId),
@@ -131,7 +122,6 @@ export const listInstruments = asyncHandler(async (req: Request, res: Response) 
     ...(systemId ? { systemId } : {}),
     ...(costCenterId ? { costCenterId } : {}),
     ...(operationalStatus ? { operationalStatus } : {}),
-    ...(somenteCalibraveis ? { calibratable: true } : {}),
     ...(search
       ? {
           OR: [
@@ -185,7 +175,7 @@ export const listInstruments = asyncHandler(async (req: Request, res: Response) 
 const instrumentRefSelect = { id: true, type: true, model: true, serialNumber: true, tag: true, description: true } as const;
 
 export const getInstrument = asyncHandler(async (req: Request, res: Response) => {
-  await assertServiceAccess(req, ["CALIBRATION", "CMMS_MAINTENANCE"]);
+  await assertServiceAccess(req, ["CMMS_MAINTENANCE"]);
   const instrument = await prisma.instrument.findFirst({
     where: { id: req.params.id, deletedAt: null, ...clientScopeFilter(req) },
     include: {
@@ -196,20 +186,6 @@ export const getInstrument = asyncHandler(async (req: Request, res: Response) =>
       area: { select: { id: true, name: true } },
       system: { select: { id: true, name: true } },
       costCenter: { select: { id: true, name: true, code: true } },
-      calibrations: {
-        where: { deletedAt: null },
-        orderBy: { calibrationDate: "desc" },
-        select: {
-          id: true,
-          certificateNumber: true,
-          calibrationDate: true,
-          validUntil: true,
-          result: true,
-          status: true,
-          visibleToClient: true,
-          revisionNumber: true,
-        },
-      },
     },
   });
   if (!instrument) throw new NotFoundError("Instrumento");
@@ -481,7 +457,7 @@ async function assertTagAvailable(clientId: string, tag: string, excludeId?: str
 }
 
 export const createInstrument = asyncHandler(async (req: Request, res: Response) => {
-  await assertServiceAccess(req, ["CALIBRATION", "CMMS_MAINTENANCE"]);
+  await assertServiceAccess(req, ["CMMS_MAINTENANCE"]);
   const data = instrumentSchema.parse(req.body);
   // Cliente so cadastra ativo para a propria empresa - o clientId vem sempre da sessao,
   // nunca do corpo da requisicao (mesmo que o cliente tente enviar outro).
@@ -556,7 +532,7 @@ export const createInstrument = asyncHandler(async (req: Request, res: Response)
 });
 
 export const updateInstrument = asyncHandler(async (req: Request, res: Response) => {
-  await assertServiceAccess(req, ["CALIBRATION", "CMMS_MAINTENANCE"]);
+  await assertServiceAccess(req, ["CMMS_MAINTENANCE"]);
   const data = instrumentSchema.partial().parse(req.body);
   const existing = await prisma.instrument.findFirst({ where: { id: req.params.id, deletedAt: null } });
   if (!existing) throw new NotFoundError("Instrumento");
@@ -641,7 +617,7 @@ export const updateInstrument = asyncHandler(async (req: Request, res: Response)
  * dizer o tamanho do que esta pendurado nele antes de perguntar "tem certeza?".
  */
 async function impactoDaRemocao(instrumentId: string) {
-  const [filhos, ordensAbertas, ordens, planos, pontos, calibracoes] = await Promise.all([
+  const [filhos, ordensAbertas, ordens, planos, pontos] = await Promise.all([
     prisma.instrument.count({ where: { parentId: instrumentId, deletedAt: null } }),
     prisma.maintenanceWorkOrder.count({
       where: { instrumentId, deletedAt: null, status: { notIn: ["COMPLETED", "CANCELED"] } },
@@ -649,13 +625,12 @@ async function impactoDaRemocao(instrumentId: string) {
     prisma.maintenanceWorkOrder.count({ where: { instrumentId, deletedAt: null } }),
     prisma.maintenancePlan.count({ where: { instrumentId, deletedAt: null } }),
     prisma.lubricationPoint.count({ where: { instrumentId, deletedAt: null, active: true } }),
-    prisma.calibration.count({ where: { instrumentId, deletedAt: null } }),
   ]);
-  return { filhos, ordensAbertas, ordens, planos, pontos, calibracoes };
+  return { filhos, ordensAbertas, ordens, planos, pontos };
 }
 
 export const getInstrumentRemovalImpact = asyncHandler(async (req: Request, res: Response) => {
-  await assertServiceAccess(req, ["CALIBRATION", "CMMS_MAINTENANCE"]);
+  await assertServiceAccess(req, ["CMMS_MAINTENANCE"]);
   const existing = await prisma.instrument.findFirst({
     where: { id: req.params.id, deletedAt: null, ...clientScopeFilter(req) },
   });
@@ -906,7 +881,7 @@ export const listInstrumentAttachmentsRoute = asyncHandler(async (req: Request, 
 /** Foto principal do ativo. Substituir apaga a anterior do armazenamento - nao faz sentido
  * acumular fotos orfas de um campo que so guarda uma. */
 export const uploadInstrumentPhoto = asyncHandler(async (req: Request, res: Response) => {
-  await assertServiceAccess(req, ["CALIBRATION", "CMMS_MAINTENANCE"]);
+  await assertServiceAccess(req, ["CMMS_MAINTENANCE"]);
   const existing = await prisma.instrument.findFirst({ where: { id: req.params.id, deletedAt: null, ...clientScopeFilter(req) } });
   if (!existing) throw new NotFoundError("Ativo");
 
@@ -930,7 +905,7 @@ export const uploadInstrumentPhoto = asyncHandler(async (req: Request, res: Resp
 });
 
 export const deleteInstrumentPhoto = asyncHandler(async (req: Request, res: Response) => {
-  await assertServiceAccess(req, ["CALIBRATION", "CMMS_MAINTENANCE"]);
+  await assertServiceAccess(req, ["CMMS_MAINTENANCE"]);
   const existing = await prisma.instrument.findFirst({ where: { id: req.params.id, deletedAt: null, ...clientScopeFilter(req) } });
   if (!existing) throw new NotFoundError("Ativo");
 

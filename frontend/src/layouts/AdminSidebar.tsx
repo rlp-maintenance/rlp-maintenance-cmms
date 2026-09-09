@@ -3,7 +3,7 @@ import { NavLink } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { useAuth } from "../auth/AuthContext";
 import { ADMIN_NAV } from "./adminNav";
-import { Logo } from "../components/Logo";
+import { CmmsLogo } from "../components/CmmsLogo";
 
 const COLLAPSE_KEY = "optiprocess-admin-sidebar-collapsed";
 
@@ -31,7 +31,7 @@ export function AdminSidebar({ mobileOpen, onCloseMobile }: { mobileOpen: boolea
     return (
       <>
         <div className={`flex h-16 items-center ${isCollapsed ? "justify-center px-2" : "px-5"}`}>
-          {!isCollapsed && <Logo variant="light" size="sm" />}
+          {!isCollapsed && <CmmsLogo variant="light" size="sm" />}
           <button
             type="button"
             onClick={() => setCollapsed((c) => !c)}

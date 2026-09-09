@@ -121,19 +121,6 @@ export type ServiceCategory =
   | "CMMS_MAINTENANCE"
   | "OTHER";
 
-export type ServiceOrderStatus = "BUDGET" | "APPROVED" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELED";
-export type ServiceOrderItemType = "CHECKLIST" | "MATERIAL";
-
-export interface ServiceOrderItem {
-  id: string;
-  serviceOrderId: string;
-  type: ServiceOrderItemType;
-  description: string;
-  done: boolean | null;
-  quantity: number | null;
-  unit: string | null;
-}
-
 export interface InstrumentRef {
   id: string;
   type: string;
@@ -143,27 +130,6 @@ export interface InstrumentRef {
   description?: string | null;
   /** Vem junto onde a tela precisa mostrar a criticidade herdada do ativo. */
   criticality?: MaintenancePriority;
-}
-
-export interface ServiceOrder {
-  id: string;
-  number: string;
-  clientId: string;
-  client?: ClientRef;
-  instrumentId: string | null;
-  instrument?: InstrumentRef | null;
-  siteAddress: string;
-  category: ServiceCategory;
-  description: string;
-  technicianId: string | null;
-  technician?: { id: string; name: string } | null;
-  scheduledDate: string | null;
-  deadline: string | null;
-  laborHours: number | null;
-  status: ServiceOrderStatus;
-  clientApprovedAt: string | null;
-  createdAt: string;
-  items?: ServiceOrderItem[];
 }
 
 export type InstrumentStatus = "VALID" | "DUE_SOON" | "EXPIRED" | "IN_MAINTENANCE";
@@ -212,7 +178,6 @@ export interface Instrument {
   // Nivel hierarquico resolvido a partir do catalogo AssetType (por nome) - so pra
   // escolher o icone certo na arvore de ativos, ausente quando o tipo nao tem nivel definido.
   assetTypeLevel?: AssetHierarchyLevel | null;
-  calibrations?: CalibrationSummary[];
   // Arvore de ativos: um filho e' um Ativo completo apontando para o pai.
   parentId?: string | null;
   parent?: InstrumentRef | null;
@@ -232,33 +197,10 @@ export interface Instrument {
   specificAttributes?: Record<string, string> | null;
 }
 
-export type CalibrationResult = "APPROVED" | "APPROVED_WITH_RESTRICTION" | "REJECTED";
-export type PointResult = "PASS" | "FAIL";
-export type DocumentStatus = "DRAFT" | "ISSUED";
-
-export interface CalibrationPoint {
-  id?: string;
-  standardValue: number;
-  indicatedValue: number;
-  error: number;
-  tolerance: number;
-  uncertainty: number;
-  result: PointResult;
-}
-
-export interface CalibrationStandard {
-  id?: string;
-  description: string;
-  manufacturer?: string | null;
-  model?: string | null;
-  serialNumber?: string | null;
-  certificateNumber?: string | null;
-  certificateValidUntil?: string | null;
-  laboratory?: string | null;
-}
-
 export type AttachmentCategory = "LOCATION" | "INSTRUMENT" | "STANDARD" | "MEASUREMENT" | "DOCUMENT" | "OTHER";
 
+/** Anexo generico - mesmo formato usado nos anexos de ativo, plano, OS de manutencao,
+ * solicitacao e RCA (nome herdado de quando so calibracao tinha anexo). */
 export interface CalibrationAttachment {
   id: string;
   category: AttachmentCategory;
@@ -266,207 +208,6 @@ export interface CalibrationAttachment {
   fileName: string;
   mimeType: string;
   sizeBytes: number;
-  createdAt: string;
-}
-
-export interface CalibrationSummary {
-  id: string;
-  certificateNumber: string;
-  calibrationDate: string;
-  validUntil: string;
-  result: CalibrationResult;
-  status: DocumentStatus;
-  visibleToClient: boolean;
-  revisionNumber: number;
-}
-
-export interface Calibration {
-  id: string;
-  certificateNumber: string;
-  clientId: string;
-  client?: ClientRef;
-  instrumentId: string;
-  instrument?: Instrument;
-  serviceOrderId: string | null;
-  serviceOrder?: { id: string; number: string } | null;
-  calibrationDate: string;
-  location: string;
-  technicianId: string;
-  technician?: { id: string; name: string };
-  standardUsed: string | null;
-  traceability: string | null;
-  procedure: string | null;
-  coverageFactorK: number | null;
-  ambientTemperature: number | null;
-  ambientHumidity: number | null;
-  environmentalNotes: string | null;
-  result: CalibrationResult;
-  technicalConclusion: string;
-  observations: string | null;
-  validUntil: string;
-  issuedAt: string | null;
-  standards: CalibrationStandard[];
-  status: DocumentStatus;
-  visibleToClient: boolean;
-  qrCodeToken: string;
-  qrCodeUrl?: string;
-  qrCodeDataUrl?: string;
-  revisionNumber: number;
-  previousRevisionId: string | null;
-  points: CalibrationPoint[];
-  pdfAttachment: { id: string; fileName: string; mimeType: string; sizeBytes: number } | null;
-  createdAt: string;
-}
-
-export type TechnicalReportCategory =
-  | "ELECTRICAL_INSTALLATION"
-  | "THERMOGRAPHY"
-  | "GROUNDING"
-  | "SPDA"
-  | "OTHER";
-
-export interface TechnicalReport {
-  id: string;
-  number: string;
-  category: TechnicalReportCategory;
-  clientId: string;
-  client?: ClientRef;
-  location: string;
-  responsibleId: string;
-  responsible?: { id: string; name: string };
-  reportDate: string;
-  validUntil: string | null;
-  status: DocumentStatus;
-  observations: string | null;
-  visibleToClient: boolean;
-  pdfAttachment: { id: string; fileName: string; mimeType: string; sizeBytes: number } | null;
-  createdAt: string;
-}
-
-export type ContractStatus = "ACTIVE" | "EXPIRING_SOON" | "EXPIRED" | "CANCELED";
-export type ContractPeriodicity = "MONTHLY" | "QUARTERLY" | "SEMIANNUAL" | "ANNUAL" | "ONE_TIME" | "OTHER";
-
-export interface ServiceContract {
-  id: string;
-  clientId: string;
-  client?: ClientRef;
-  serviceName: string;
-  startDate: string;
-  endDate: string | null;
-  value: number | null;
-  periodicity: ContractPeriodicity;
-  responsibleId: string | null;
-  responsible?: { id: string; name: string } | null;
-  status: ContractStatus;
-  derivedStatus?: string;
-  notes: string | null;
-  createdAt: string;
-}
-
-export type ProductStatus = "ACTIVE" | "INACTIVE" | "UNAVAILABLE";
-export type InventoryMovementType = "IN" | "OUT" | "ADJUSTMENT";
-
-export interface ProductCategory {
-  id: string;
-  name: string;
-  slug: string;
-  _count?: { products: number };
-}
-
-export interface ProductImage {
-  id: string;
-  fileKey: string;
-  fileName: string;
-  mimeType: string;
-}
-
-export interface Product {
-  id: string;
-  name: string;
-  slug: string;
-  sku: string;
-  categoryId: string;
-  category?: ProductCategory;
-  brand: string | null;
-  description: string | null;
-  technicalSheetUrl: string | null;
-  price: number | null;
-  promoPrice: number | null;
-  priceOnRequest: boolean;
-  stockQty: number;
-  minStock: number;
-  status: ProductStatus;
-  featured: boolean;
-  images?: ProductImage[];
-}
-
-export type QuoteStatus = "NEW" | "IN_ANALYSIS" | "QUOTE_SENT" | "APPROVED" | "REJECTED" | "EXPIRED";
-export type QuoteSource = "SERVICE_REQUEST" | "PRODUCT_CART" | "CONTACT";
-
-export interface QuoteItem {
-  id: string;
-  quoteId: string;
-  productId: string;
-  product?: { id: string; name: string; sku: string; price: number | null };
-  quantity: number;
-  unitPriceRequested: number | null;
-  unitPriceOffered: number | null;
-}
-
-export interface Quote {
-  id: string;
-  number: string;
-  clientId: string | null;
-  client?: ClientRef | null;
-  source: QuoteSource;
-  status: QuoteStatus;
-  contactName: string;
-  contactEmail: string;
-  contactPhone: string | null;
-  serviceCategory: ServiceCategory | null;
-  message: string | null;
-  shippingCost: number | null;
-  notes: string | null;
-  items: QuoteItem[];
-  createdAt: string;
-}
-
-export type OrderStatus = "PENDING" | "SEPARATED" | "DELIVERED" | "CANCELED";
-export type PaymentMethod = "PIX" | "BOLETO" | "OTHER";
-export type PaymentStatus = "PENDING" | "PAID";
-
-export interface OrderItem {
-  id: string;
-  orderId: string;
-  productId: string;
-  product?: { id: string; name: string; sku: string };
-  quantity: number;
-  unitPrice: number;
-  subtotal: number;
-}
-
-export interface OrderStatusHistoryEntry {
-  id: string;
-  status: OrderStatus;
-  note: string | null;
-  createdAt: string;
-}
-
-export interface Order {
-  id: string;
-  number: string;
-  clientId: string;
-  client?: ClientRef;
-  quoteId: string | null;
-  status: OrderStatus;
-  shippingCost: number | null;
-  totalAmount: number;
-  deadline: string | null;
-  paymentMethod: PaymentMethod | null;
-  paymentStatus: PaymentStatus;
-  paymentNotes: string | null;
-  items: OrderItem[];
-  statusHistory: OrderStatusHistoryEntry[];
   createdAt: string;
 }
 

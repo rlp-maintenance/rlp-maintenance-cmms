@@ -4,7 +4,6 @@ import { useNavigate, useParams, Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Pencil, Trash2, Plus, AlertTriangle } from "lucide-react";
 import { deleteInstrument, getInstrument, listAssetParts, addAssetPart, removeAssetPart, getInstrumentPartsHistory, getInstrumentCostSummary } from "../../../api/instruments";
-import { listServiceOrders } from "../../../api/serviceOrders";
 import { listMeters, addMeterReading } from "../../../api/meters";
 import { listMaintenancePlans } from "../../../api/maintenancePlans";
 import { listMaintenanceWorkOrders } from "../../../api/maintenanceWorkOrders";
@@ -24,7 +23,7 @@ import { ConfirmDialog } from "../../../components/ConfirmDialog";
 import { useAuth } from "../../../auth/AuthContext";
 import { useToast } from "../../../components/Toast";
 import { getApiErrorMessage } from "../../../api/client";
-import { clientDisplayName, formatDate, formatDateTime, formatServiceCategory, formatCurrency } from "../../../lib/format";
+import { clientDisplayName, formatDate, formatDateTime, formatCurrency } from "../../../lib/format";
 import { EmptyState } from "../../../components/EmptyState";
 import { camposDoTipo } from "../../../lib/camposPorTipoDeAtivo";
 
@@ -33,8 +32,6 @@ const PRIORITY_LABELS: Record<string, string> = { LOW: "Baixa", MEDIUM: "Media",
 const TABS = [
   { id: "overview", label: "Visao geral" },
   { id: "structure", label: "Estrutura" },
-  { id: "calibrations", label: "Calibracoes" },
-  { id: "services", label: "Servicos externos" },
   { id: "maintenance", label: "Manutencao" },
   { id: "costs", label: "Custos" },
   { id: "documents", label: "Documentos" },
@@ -59,11 +56,6 @@ export default function InstrumentDetail() {
   const [selectedSparePartId, setSelectedSparePartId] = useState("");
 
   const { data: instrument, isLoading, refetch } = useQuery({ queryKey: ["instrument", id], queryFn: () => getInstrument(id) });
-  const { data: serviceOrders } = useQuery({
-    queryKey: ["instrument-service-orders", id],
-    queryFn: () => listServiceOrders({ instrumentId: id, pageSize: 20 }),
-    enabled: !!id,
-  });
   const { data: meters } = useQuery({
     queryKey: ["instrument-meters", id],
     queryFn: () => listMeters({ instrumentId: id }),
@@ -323,67 +315,6 @@ export default function InstrumentDetail() {
         </div>
       )}
 
-      {tab === "calibrations" && (
-        <div className="card p-5">
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="font-semibold text-navy-900">Historico de calibracoes</h2>
-            {canManage && (
-              <Link to={`/gestao/calibracoes/novo?instrumentId=${instrument.id}&clientId=${instrument.clientId}`} className="btn-ghost btn-sm">
-                <Plus className="h-4 w-4" /> Nova
-              </Link>
-            )}
-          </div>
-          {!instrument.calibrations || instrument.calibrations.length === 0 ? (
-            <EmptyState title="Nenhuma calibracao" description="Este ativo ainda nao possui certificados." />
-          ) : (
-            <ul className="divide-y divide-gray-100">
-              {instrument.calibrations.map((c) => (
-                <li key={c.id}>
-                  <Link to={`/gestao/calibracoes/${c.id}`} className="flex items-center justify-between py-2.5 text-sm hover:text-navy-700">
-                    <div>
-                      <p className="font-medium text-graphite-800">{c.certificateNumber}</p>
-                      <p className="text-xs text-graphite-400">{formatDate(c.calibrationDate)}</p>
-                    </div>
-                    <StatusBadge status={c.status} />
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      )}
-
-      {tab === "services" && (
-        <div className="card p-5">
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="font-semibold text-navy-900">Servicos neste ativo</h2>
-            {canManage && (
-              <Link to={`/gestao/ordens-servico/novo?instrumentId=${instrument.id}&clientId=${instrument.clientId}`} className="btn-ghost btn-sm">
-                <Plus className="h-4 w-4" /> Nova
-              </Link>
-            )}
-          </div>
-          <p className="mb-3 text-xs text-graphite-500">Ordens de servico externas da OptiProcess (calibracao, laudo...) - diferente das ordens de manutencao do CMMS, na aba Manutencao.</p>
-          {!serviceOrders || serviceOrders.items.length === 0 ? (
-            <EmptyState title="Nenhum servico" description="Nenhuma ordem de servico vinculada a este ativo ainda." />
-          ) : (
-            <ul className="divide-y divide-gray-100">
-              {serviceOrders.items.map((o) => (
-                <li key={o.id}>
-                  <Link to={`/gestao/ordens-servico/${o.id}`} className="flex items-center justify-between py-2.5 text-sm hover:text-navy-700">
-                    <div>
-                      <p className="font-medium text-graphite-800">{o.number} - {formatServiceCategory(o.category)}</p>
-                      <p className="text-xs text-graphite-400">{o.scheduledDate ? formatDate(o.scheduledDate) : "Sem data agendada"}</p>
-                    </div>
-                    <StatusBadge status={o.status} />
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      )}
-
       {tab === "maintenance" && (
         <div className="space-y-6">
           <AssetLubricationCard instrumentId={instrument.id} clientId={instrument.clientId} raiz="/gestao" />
@@ -582,7 +513,7 @@ export default function InstrumentDetail() {
       <ConfirmDialog
         open={confirmDelete}
         title="Remover ativo"
-        description="Tem certeza que deseja remover este ativo? O historico de calibracoes sera preservado."
+        description="Tem certeza que deseja remover este ativo? O historico de manutencao sera preservado."
         confirmLabel="Remover"
         danger
         loading={deleting}

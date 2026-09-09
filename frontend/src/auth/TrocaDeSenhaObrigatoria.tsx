@@ -3,7 +3,7 @@ import { KeyRound, LogOut } from "lucide-react";
 import { changeOwnPassword } from "../api/auth";
 import { getApiErrorMessage } from "../api/client";
 import { useAuth } from "./AuthContext";
-import { Logo } from "../components/Logo";
+import { CmmsLogo } from "../components/CmmsLogo";
 
 /**
  * Primeiro acesso com senha provisoria: troca antes de qualquer outra coisa.
@@ -44,7 +44,7 @@ export function TrocaDeSenhaObrigatoria() {
     <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
       <div className="w-full max-w-md">
         <div className="mb-6 flex justify-center">
-          <Logo />
+          <CmmsLogo size="lg" />
         </div>
 
         <form onSubmit={trocar} className="card space-y-4 p-6" noValidate>

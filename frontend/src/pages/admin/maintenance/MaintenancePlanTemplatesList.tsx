@@ -50,7 +50,7 @@ const applySchema = z.object({
 type ApplyFormValues = z.infer<typeof applySchema>;
 
 /** Modelos reutilizaveis de plano de manutencao por familia de ativo (catalogo global
- * OptiProcess + por cliente, igual codigo de falha) - "Aplicar" instancia um plano real
+ * RLP Maintenance + por cliente, igual codigo de falha) - "Aplicar" instancia um plano real
  * pra um ativo especifico, copiando periodicidade/tolerancia/HH/checklist. */
 export default function MaintenancePlanTemplatesList() {
   const navigate = useNavigate();
@@ -175,7 +175,7 @@ export default function MaintenancePlanTemplatesList() {
           { header: "Familia de ativo", accessor: (t) => t.applicableAssetFamily ?? "-" },
           { header: "Disparo", accessor: (t) => (t.triggerType === "TIME" ? `A cada ${t.frequencyDays ?? "-"} dias` : `Medidor: a cada ${t.meterInterval ?? "-"}`) },
           { header: "HH prevista", accessor: (t) => (t.estimatedLaborHours != null ? `${t.estimatedLaborHours}h` : "-") },
-          { header: "Origem", accessor: (t) => <span className="text-xs text-graphite-500">{t.clientId ? "Meu catalogo" : "Padrao OptiProcess"}</span> },
+          { header: "Origem", accessor: (t) => <span className="text-xs text-graphite-500">{t.clientId ? "Meu catalogo" : "Padrao RLP Maintenance"}</span> },
           {
             header: "Status",
             accessor: (t) =>
@@ -228,7 +228,7 @@ export default function MaintenancePlanTemplatesList() {
       >
         <form id="plan-template-form" onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
           <div className="grid gap-4 sm:grid-cols-2">
-            {!isClient && <ClientPicker label="Cliente (vazio = catalogo padrao OptiProcess)" {...register("clientId")} />}
+            {!isClient && <ClientPicker label="Cliente (vazio = catalogo padrao RLP Maintenance)" {...register("clientId")} />}
             <TextInput label="Nome do modelo" required placeholder="Ex.: Lubrificacao trimestral - motores eletricos" error={errors.name?.message} {...register("name")} />
           </div>
           <TextInput label="Familia de ativo aplicavel (opcional)" placeholder="Ex.: Motores eletricos, Bombas centrifugas" {...register("applicableAssetFamily")} />

@@ -1,20 +1,14 @@
 import { api } from "./client";
-import type { Order, ServiceOrder, TechnicalReport } from "./types";
+import type { MaintenanceWorkOrder, ClientRef } from "./types";
 
 export interface AdminDashboard {
   kpis: {
     activeClients: number;
-    calibrationsDueSoon: number;
-    openServiceOrders: number;
-    reportsAwaitingApproval: number;
+    totalInstruments: number;
+    openWorkOrders: number;
   };
-  recentOrders: Order[];
-  lowStockProducts: { id: string; name: string; sku: string; stockQty: number; minStock: number }[];
-  upcomingServiceOrders: ServiceOrder[];
-  charts: {
-    revenueByMonth: { month: string; total: number }[];
-    servicesByMonth: { month: string; total: number }[];
-  };
+  lowStockSpareParts: { id: string; name: string; code: string | null; stockQty: number; minStock: number; client: ClientRef }[];
+  recentWorkOrders: MaintenanceWorkOrder[];
 }
 
 export async function getAdminDashboard(): Promise<AdminDashboard> {
@@ -23,11 +17,10 @@ export async function getAdminDashboard(): Promise<AdminDashboard> {
 }
 
 export interface ClientDashboard {
-  certificates: { valid: number; dueSoon: number; expired: number };
-  upcomingServiceOrders: ServiceOrder[];
-  recentReports: TechnicalReport[];
-  activeContracts: number;
-  openQuotesAndOrders: number;
+  openWorkOrders: number;
+  planosVencendo: number;
+  pontosPendentes: number;
+  recentWorkOrders: MaintenanceWorkOrder[];
 }
 
 export async function getClientDashboard(): Promise<ClientDashboard> {
@@ -38,8 +31,7 @@ export async function getClientDashboard(): Promise<ClientDashboard> {
 export interface PlatformDashboard {
   totalActiveClients: number;
   clientsWithoutPlan: number;
-  mrr: number;
-  plans: { id: string; name: string; active: boolean; priceMonthly: number | null; clientCount: number }[];
+  plans: { id: string; name: string; active: boolean; clientCount: number }[];
   nearLimitClients: {
     clientId: string;
     name: string;

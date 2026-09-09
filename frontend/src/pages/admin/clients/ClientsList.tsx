@@ -32,7 +32,7 @@ export default function ClientsList() {
     <div>
       <PageHeader
         title="Clientes"
-        description="Empresas atendidas pela OptiProcess"
+        description="Empresas atendidas pela RLP Maintenance"
         actions={
           canManage && (
             <button className="btn-primary" onClick={() => setCreateOpen(true)}>

@@ -20,7 +20,7 @@ const schema = z.object({ name: z.string().min(2, "Informe o nome do motivo.") }
 type FormValues = z.infer<typeof schema>;
 
 /** Catalogo de motivos de parada (ex.: falta de material, quebra) - mesmo padrao do
- * Codigos de falha: catalogo padrao da OptiProcess + o que cada empresa cadastra. */
+ * Codigos de falha: catalogo padrao da RLP Maintenance + o que cada empresa cadastra. */
 export default function StoppageReasonsList() {
   const { base } = useCmms();
   const queryClient = useQueryClient();
@@ -118,7 +118,7 @@ export default function StoppageReasonsList() {
           { header: "Nome", accessor: (r) => <span className="font-medium text-navy-900">{r.name}</span> },
           {
             header: "Origem",
-            accessor: (r) => <span className="text-xs text-graphite-500">{r.clientId ? "Meu catalogo" : "Padrao OptiProcess"}</span>,
+            accessor: (r) => <span className="text-xs text-graphite-500">{r.clientId ? "Meu catalogo" : "Padrao RLP Maintenance"}</span>,
           },
           {
             header: "Status",

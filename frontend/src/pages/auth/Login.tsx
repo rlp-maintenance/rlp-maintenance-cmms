@@ -7,7 +7,7 @@ import { useAuth } from "../../auth/AuthContext";
 import { homeForRole } from "../../auth/ProtectedRoute";
 import { TextInput } from "../../components/form/Field";
 import { getApiErrorMessage } from "../../api/client";
-import { LogoFull } from "../../components/Logo";
+import { CmmsLogo } from "../../components/CmmsLogo";
 
 const schema = z.object({
   email: z.string().email("Informe um e-mail válido."),
@@ -42,7 +42,7 @@ export default function Login() {
     <div className="flex min-h-screen items-center justify-center bg-navy-950 px-4 py-12">
       <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-2xl">
         <div className="mb-6 flex flex-col items-center text-center">
-          <LogoFull variant="dark" className="h-32" />
+          <CmmsLogo variant="dark" size="xl" />
           <p className="mt-3 text-sm text-graphite-500">Acesse a gestão interna ou o portal do cliente</p>
         </div>
 

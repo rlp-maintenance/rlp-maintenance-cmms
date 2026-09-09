@@ -45,7 +45,7 @@ export default function FailureCodesList() {
     resolver: zodResolver(schema),
   });
 
-  // Codigos sem clientId sao o catalogo padrao da OptiProcess: o cliente usa, mas nao edita.
+  // Codigos sem clientId sao o catalogo padrao da RLP Maintenance: o cliente usa, mas nao edita.
   function canEdit(code: FailureCode) {
     if (!canManage) return false;
     return isClient ? code.clientId === ownClientId : true;
@@ -141,7 +141,7 @@ export default function FailureCodesList() {
           {
             header: "Origem",
             accessor: (c) => (
-              <span className="text-xs text-graphite-500">{c.clientId ? "Meu catalogo" : "Padrao OptiProcess"}</span>
+              <span className="text-xs text-graphite-500">{c.clientId ? "Meu catalogo" : "Padrao RLP Maintenance"}</span>
             ),
           },
           {

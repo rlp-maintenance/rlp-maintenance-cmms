@@ -7,7 +7,6 @@ import { useAuth } from "../auth/AuthContext";
 import { getPortalNav, PORTAL_NAV_PADRAO_FECHADO } from "./portalNav";
 import { CmmsLogo } from "../components/CmmsLogo";
 import { clientDisplayName } from "../lib/format";
-import { Logo } from "../components/Logo";
 
 const COLLAPSE_KEY = "optiprocess-portal-sidebar-collapsed";
 const SECOES_KEY = "optiprocess-portal-secoes-fechadas";
@@ -61,16 +60,12 @@ export function ClientPortalLayout() {
   }
   const contractedServices = user?.client?.contractedServices ?? [];
   const portalNav = getPortalNav(contractedServices, user?.role);
-  // Quem assinou o CMMS esta usando o RLP Maintenance - a marca do portal dele e' a do
-  // produto. Cliente que so tem servicos da OptiProcess (calibracao, laudos) continua
-  // vendo a marca da OptiProcess, que e' quem presta o servico.
-  const usesCmms = contractedServices.includes("CMMS_MAINTENANCE");
   // O logo do produto continua sempre presente - o da empresa entra do lado, nao no lugar
   // dele, com um traco separando os dois. Sem logo cadastrado, fica so o do produto, como
   // sempre foi.
   const brand = (size: "sm" | "md") => (
     <span className="flex min-w-0 items-center gap-2.5">
-      {usesCmms ? <CmmsLogo variant="light" size={size} /> : <Logo variant="light" size={size} />}
+      <CmmsLogo variant="light" size={size} />
       {contrato?.logoUrl && (
         <>
           <span className="h-6 w-px shrink-0 bg-navy-700" aria-hidden="true" />
@@ -172,7 +167,7 @@ export function ClientPortalLayout() {
         <div className="sticky top-0 h-screen overflow-y-auto overflow-x-hidden">
           <div className={`flex h-16 items-center ${collapsed ? "justify-center px-2" : "px-5"}`}>
             {!collapsed && (
-              <Link to="/portal" aria-label={usesCmms ? "RLP Maintenance" : "OptiProcess - portal do cliente"}>
+              <Link to="/portal" aria-label="RLP Maintenance">
                 {brand("sm")}
               </Link>
             )}
@@ -212,7 +207,7 @@ export function ClientPortalLayout() {
           </button>
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-semibold text-navy-900">{clientDisplayName(user?.client)}</p>
-            <p className="text-xs text-graphite-500">{usesCmms ? "RLP Maintenance" : "Portal do cliente"}</p>
+            <p className="text-xs text-graphite-500">RLP Maintenance</p>
           </div>
 
           {/* O plano contratado no cabecalho, sempre visivel: ele estava so no rodape do

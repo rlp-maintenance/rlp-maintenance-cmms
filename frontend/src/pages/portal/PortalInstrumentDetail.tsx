@@ -5,7 +5,6 @@ import { Pencil, Plus, Trash2, CornerLeftUp, AlertTriangle } from "lucide-react"
 import { getInstrument, listAssetParts, addAssetPart, removeAssetPart, getInstrumentPartsHistory, getInstrumentCostSummary, deleteInstrument, getImpactoDaRemocao } from "../../api/instruments";
 import type { ImpactoDaRemocao } from "../../api/instruments";
 import { listSpareParts } from "../../api/spareParts";
-import { listServiceOrders } from "../../api/serviceOrders";
 import { listMeters, addMeterReading } from "../../api/meters";
 import { listMaintenancePlans } from "../../api/maintenancePlans";
 import { listMaintenanceWorkOrders } from "../../api/maintenanceWorkOrders";
@@ -13,7 +12,7 @@ import { PageHeader } from "../../components/PageHeader";
 import { FullPageSpinner } from "../../components/Spinner";
 import { StatusBadge } from "../../components/StatusBadge";
 import { Tabs } from "../../components/Tabs";
-import { formatDate, formatServiceCategory, formatCurrency } from "../../lib/format";
+import { formatDate, formatCurrency } from "../../lib/format";
 import { TIPOS_DE_OS } from "../../lib/maintenanceLabels";
 import { areaComCentroDeCusto } from "../../lib/centroDeCusto";
 import { EmptyState } from "../../components/EmptyState";
@@ -46,7 +45,6 @@ function descricaoDaRemocao(tag: string | null, impacto?: ImpactoDaRemocao): str
     impacto.planos > 0 ? `${impacto.planos} plano(s)` : null,
     impacto.pontos > 0 ? `${impacto.pontos} ponto(s) de lubrificacao` : null,
     impacto.ordens > 0 ? `${impacto.ordens} ordem(ns) no historico` : null,
-    impacto.calibracoes > 0 ? `${impacto.calibracoes} calibracao(oes)` : null,
   ].filter(Boolean);
 
   return ligados.length > 0 ? `${base} Estao ligados a ele: ${ligados.join(", ")}.` : base;
@@ -73,11 +71,6 @@ export default function PortalInstrumentDetail() {
     queryKey: ["impacto-remocao", id],
     queryFn: () => getImpactoDaRemocao(id),
     enabled: confirmarRemocao && !!id,
-  });
-  const { data: serviceOrders } = useQuery({
-    queryKey: ["portal-instrument-service-orders", id],
-    queryFn: () => listServiceOrders({ instrumentId: id, pageSize: 20 }),
-    enabled: !!id,
   });
   const { data: meters } = useQuery({
     queryKey: ["portal-instrument-meters", id],
@@ -177,8 +170,6 @@ export default function PortalInstrumentDetail() {
   const tabs = [
     { id: "overview", label: "Visao geral" },
     { id: "structure", label: "Estrutura" },
-    { id: "certificates", label: "Certificados" },
-    { id: "services", label: "Servicos externos" },
     ...(hasCmms ? [{ id: "maintenance", label: "Manutencao" }, { id: "costs", label: "Custos" }] : []),
     { id: "documents", label: "Documentos" },
   ];
@@ -324,51 +315,6 @@ export default function PortalInstrumentDetail() {
                 </ul>
               )}
             </div>
-          )}
-        </div>
-      )}
-
-      {tab === "certificates" && (
-        <div className="card p-5">
-          <h2 className="mb-3 font-semibold text-navy-900">Certificados</h2>
-          {!instrument.calibrations || instrument.calibrations.length === 0 ? (
-            <EmptyState title="Nenhum certificado disponivel" />
-          ) : (
-            <ul className="divide-y divide-gray-100">
-              {instrument.calibrations
-                .filter((c) => c.visibleToClient)
-                .map((c) => (
-                  <li key={c.id}>
-                    <Link to={`/portal/certificados/${c.id}`} className="flex items-center justify-between py-2.5 text-sm hover:text-navy-700">
-                      <span className="font-medium text-graphite-800">{c.certificateNumber}</span>
-                      <StatusBadge status={c.status} />
-                    </Link>
-                  </li>
-                ))}
-            </ul>
-          )}
-        </div>
-      )}
-
-      {tab === "services" && (
-        <div className="card p-5">
-          <h2 className="mb-3 font-semibold text-navy-900">Servicos neste ativo</h2>
-          {!serviceOrders || serviceOrders.items.length === 0 ? (
-            <EmptyState title="Nenhum servico" description="Nenhuma ordem de servico vinculada a este ativo ainda." />
-          ) : (
-            <ul className="divide-y divide-gray-100">
-              {serviceOrders.items.map((o) => (
-                <li key={o.id}>
-                  <Link to={`/portal/ordens-servico/${o.id}`} className="flex items-center justify-between py-2.5 text-sm hover:text-navy-700">
-                    <div>
-                      <p className="font-medium text-graphite-800">{o.number}</p>
-                      <p className="text-xs text-graphite-400">{formatServiceCategory(o.category)}</p>
-                    </div>
-                    <StatusBadge status={o.status} />
-                  </Link>
-                </li>
-              ))}
-            </ul>
           )}
         </div>
       )}

@@ -97,7 +97,7 @@ export default function SparePartsList() {
     <div>
       <PageHeader
         title="Almoxarifado"
-        description="Estoque de pecas de manutencao do cliente (rolamentos, retentores, disjuntores...) - cada empresa tem o seu, separado dos Produtos vendidos pela OptiProcess"
+        description="Estoque de pecas de manutencao do cliente (rolamentos, retentores, disjuntores...) - cada empresa tem o seu almoxarifado"
         breadcrumbs={[{ label: "RLP Maintenance CMMS", to: "/gestao/manutencao" }, { label: "Almoxarifado" }]}
         actions={
           clientId && (

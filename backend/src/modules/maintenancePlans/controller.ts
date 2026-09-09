@@ -295,12 +295,11 @@ async function sincronizarPeriodicidadeDeCalibracao(planId: string): Promise<voi
 }
 
 /**
- * Calibracao e' servico da OptiProcess, nao autoatendimento do CMMS: o que o cliente cria
- * aqui e' um pedido, nao o programa oficial de calibracao (que vive em Ativo calibravel +
- * Calibration, com certificado de verdade). Sem um aviso, esse plano ficaria enterrado na
- * lista do cliente e a OptiProcess nunca saberia que ele pediu.
+ * Calibracao periodica rastreada e' algo que a equipe interna acompanha de perto: o
+ * cliente pode criar o plano sozinho, mas sem um aviso ele ficaria enterrado na lista dele
+ * e a equipe nunca saberia que precisa dar suporte tecnico (padrao, procedimento, etc.).
  */
-async function alertarOptiProcessSobrePlanoDeCalibracao(plan: { id: string; name: string; code: string | null; client: { companyName: string } }) {
+async function alertarEquipeSobrePlanoDeCalibracao(plan: { id: string; name: string; code: string | null; client: { companyName: string } }) {
   const equipe = await prisma.user.findMany({
     where: { role: { in: ["ADMIN", "COMMERCIAL"] }, active: true, deletedAt: null },
     select: { id: true },
@@ -310,7 +309,7 @@ async function alertarOptiProcessSobrePlanoDeCalibracao(plan: { id: string; name
     data: equipe.map((u) => ({
       userId: u.id,
       title: "Plano de calibracao criado pelo cliente",
-      message: `${plan.client.companyName} criou o plano ${plan.code ?? plan.name} (${plan.name}) - decida se ele entra no programa de calibracao da OptiProcess.`,
+      message: `${plan.client.companyName} criou o plano ${plan.code ?? plan.name} (${plan.name}) - de calibracao periodica rastreada.`,
       link: `/gestao/manutencao/planos/${plan.id}`,
     })),
   });
@@ -400,7 +399,7 @@ export const createMaintenancePlan = asyncHandler(async (req: Request, res: Resp
   // So avisa quando quem criou e' do lado do cliente - a propria equipe interna, criando
   // pelo acesso master, ja sabe que criou.
   if (plan.planType === "CALIBRATION" && ["CLIENT", "CLIENT_PLANNER", "CLIENT_TECHNICIAN"].includes(req.user?.role ?? "")) {
-    await alertarOptiProcessSobrePlanoDeCalibracao(plan);
+    await alertarEquipeSobrePlanoDeCalibracao(plan);
   }
 
   res.status(201).json(withDerivedStatus(plan));
@@ -512,7 +511,7 @@ export const updateMaintenancePlan = asyncHandler(async (req: Request, res: Resp
 
   // Virou plano de calibracao agora (nao era antes) - mesmo aviso da criacao.
   if (plan.planType === "CALIBRATION" && existing.planType !== "CALIBRATION" && ["CLIENT", "CLIENT_PLANNER", "CLIENT_TECHNICIAN"].includes(req.user?.role ?? "")) {
-    await alertarOptiProcessSobrePlanoDeCalibracao(plan);
+    await alertarEquipeSobrePlanoDeCalibracao(plan);
   }
 
   res.json(withDerivedStatus(plan));
@@ -808,9 +807,9 @@ export const runPlanGeneration = asyncHandler(async (req: Request, res: Response
 
 /**
  * Interruptor da geracao automatica (a rodada periodica, sozinha) - da propria empresa.
- * Quem decide se quer ligado e' o cliente, na tela de Planos preventivos dele; a OptiProcess
- * nao mexe nisso pela Gestao. "Rodar agora" continua liberado mesmo com isso pausado: aqui
- * e' so o piloto automatico, nao a geracao em si.
+ * Quem decide se quer ligado e' o cliente, na tela de Planos preventivos dele; a equipe
+ * interna nao mexe nisso pela Gestao. "Rodar agora" continua liberado mesmo com isso
+ * pausado: aqui e' so o piloto automatico, nao a geracao em si.
  */
 export const getAutomationStatus = asyncHandler(async (req: Request, res: Response) => {
   const clientId = resolveClientId(req, req.query.clientId as string | undefined);

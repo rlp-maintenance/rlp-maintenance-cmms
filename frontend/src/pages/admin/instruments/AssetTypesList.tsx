@@ -129,7 +129,7 @@ export default function AssetTypesList() {
           },
           {
             header: "Origem",
-            accessor: (t) => <span className="text-xs text-graphite-500">{t.clientId ? "Meu catalogo" : "Padrao OptiProcess"}</span>,
+            accessor: (t) => <span className="text-xs text-graphite-500">{t.clientId ? "Meu catalogo" : "Padrao RLP Maintenance"}</span>,
           },
           {
             header: "Status",

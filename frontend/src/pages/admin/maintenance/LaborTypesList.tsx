@@ -22,7 +22,7 @@ type FormValues = z.infer<typeof schema>;
 /**
  * Catalogo de funcoes da equipe (Tecnico mecanico, Eletricista, Lubrificador...) - a lista
  * fechada que o cadastro de mao de obra usa. Mesmo padrao dos outros catalogos: o padrao
- * da OptiProcess vem pronto e cada empresa acrescenta o que faltar.
+ * da RLP Maintenance vem pronto e cada empresa acrescenta o que faltar.
  */
 export default function LaborTypesList() {
   const { base } = useCmms();
@@ -40,7 +40,7 @@ export default function LaborTypesList() {
     resolver: zodResolver(schema),
   });
 
-  /** O catalogo padrao da OptiProcess e' compartilhado por todos os clientes - so a equipe
+  /** O catalogo padrao da RLP Maintenance e' compartilhado por todos os clientes - so a equipe
    * interna mexe nele. Cada empresa edita apenas o que ela mesma cadastrou. */
   function canEdit(type: LaborType) {
     if (!canManage) return false;
@@ -125,7 +125,7 @@ export default function LaborTypesList() {
           { header: "Funcao", accessor: (r) => <span className="font-medium text-navy-900">{r.name}</span> },
           {
             header: "Origem",
-            accessor: (r) => <span className="text-xs text-graphite-500">{r.clientId ? "Meu catalogo" : "Padrao OptiProcess"}</span>,
+            accessor: (r) => <span className="text-xs text-graphite-500">{r.clientId ? "Meu catalogo" : "Padrao RLP Maintenance"}</span>,
           },
           {
             header: "Status",

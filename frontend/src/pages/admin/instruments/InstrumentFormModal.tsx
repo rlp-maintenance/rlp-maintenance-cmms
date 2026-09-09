@@ -356,13 +356,12 @@ export function InstrumentFormModal({ open, onClose, onSaved, instrument, initia
 
         <SecaoRecolhivel titulo="Calibracao e lubrificacao" dica="a que este ativo esta sujeito">
           <CheckboxInput
-            label="Ativo calibravel - aparece na lista de Ativos da OptiProcess"
+            label="Ativo calibravel - rastreia frequencia e vencimento de calibracao"
             {...register("calibratable")}
           />
           <p className="text-xs text-graphite-500">
-            Marque so equipamentos que passam por calibracao. Linha, area, maquina e componente do CMMS
-            ficam desmarcados e nao aparecem para a equipe da OptiProcess. De quanto em quanto tempo calibrar
-            e' definido no plano de calibracao, nao aqui.
+            Marque so equipamentos que passam por calibracao periodica rastreada. De quanto em quanto tempo
+            calibrar e' definido no plano de manutencao deste ativo, nao aqui.
           </p>
           <CheckboxInput
             label="Ativo lubrificavel - tem ponto de lubrificacao"
@@ -425,12 +424,11 @@ export function InstrumentFormModal({ open, onClose, onSaved, instrument, initia
           </SecaoRecolhivel>
         )}
         {/* A unica coisa que o cadastro rapido pergunta alem do essencial, e so para a
-            equipe interna: e' o que decide se o ativo entra na lista de calibracao da
-            OptiProcess ou fica so na arvore do CMMS do cliente. O cliente nao ve - o que
-            ele cadastra e' o parque dele. */}
+            equipe interna: se este ativo rastreia calibracao periodica. O cliente nao ve -
+            o que ele cadastra e' o parque dele. */}
         {modoRapido && user?.role !== "CLIENT" && (
           <CheckboxInput
-            label="Ativo calibravel - aparece na lista de Ativos da OptiProcess"
+            label="Ativo calibravel - rastreia frequencia e vencimento de calibracao"
             {...register("calibratable")}
           />
         )}

@@ -1,13 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link, Navigate } from "react-router-dom";
-import { BadgeCheck, AlertTriangle, ShieldX, FileWarning, FileSignature, ShoppingCart, Gauge, TimerReset, Activity, Wrench, Boxes, ShieldCheck, ClipboardList, ListChecks, GitBranch, Radar, HardHat } from "lucide-react";
+import { Gauge, TimerReset, Activity, Wrench, Boxes, ClipboardList, ListChecks, GitBranch, Radar, HardHat, ShieldCheck } from "lucide-react";
 import { getClientDashboard } from "../../api/dashboard";
 import { listMaintenanceWorkOrders, getMaintenanceDashboard } from "../../api/maintenanceWorkOrders";
 import { useAuth } from "../../auth/AuthContext";
 import { FullPageSpinner } from "../../components/Spinner";
 import { StatCard } from "../../components/StatCard";
 import { StatusBadge } from "../../components/StatusBadge";
-import { clientDisplayName, formatDate, formatReportCategory, formatKpi } from "../../lib/format";
+import { clientDisplayName, formatKpi } from "../../lib/format";
 import { EmptyState } from "../../components/EmptyState";
 
 import { TIPOS_DE_OS as TYPE_LABELS } from "../../lib/maintenanceLabels";
@@ -16,9 +16,8 @@ export default function PortalDashboard() {
   const { user } = useAuth();
   const hasCmms = !!user?.client?.contractedServices?.includes("CMMS_MAINTENANCE");
 
-  // Quem tem o CMMS tem uma casa so: o painel do CMMS. Este painel continua existindo para
-  // quem contratou apenas calibracao ou laudos - la ele mostra certificados e ordens de
-  // servico externas, que o painel do CMMS nao cobre.
+  // Todo cliente deste produto e' do CMMS - sem o servico contratado, nao ha o que mostrar
+  // aqui (nenhum outro modulo sobrevive na tela inicial do portal).
   if (hasCmms) return <Navigate to="/portal/manutencao" replace />;
 
   const { data, isLoading } = useQuery({ queryKey: ["client-dashboard"], queryFn: getClientDashboard });
@@ -98,17 +97,6 @@ export default function PortalDashboard() {
             </ul>
           )}
         </div>
-
-        <div className="mt-8 border-t border-gray-200 pt-6">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-graphite-400">Resumo da conta</p>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-            <CompactStat label="Certificados validos" value={data.certificates.valid} to="/portal/certificados" />
-            <CompactStat label="Proximos do vencimento" value={data.certificates.dueSoon} to="/portal/certificados" />
-            <CompactStat label="Certificados vencidos" value={data.certificates.expired} to="/portal/certificados" />
-            <CompactStat label="Contratos ativos" value={data.activeContracts} to="/portal/contratos" />
-            <CompactStat label="Orcamentos/pedidos em aberto" value={data.openQuotesAndOrders} to="/portal/pedidos" />
-          </div>
-        </div>
       </div>
     );
   }
@@ -116,66 +104,13 @@ export default function PortalDashboard() {
   return (
     <div>
       <h1 className="text-2xl font-bold text-navy-900">Ola, {clientDisplayName(user?.client)}</h1>
-      <p className="mt-1 text-graphite-500">Aqui esta um resumo da sua conta com a OptiProcess.</p>
-
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <StatCard label="Certificados validos" value={data.certificates.valid} icon={BadgeCheck} tone="green" to="/portal/certificados" />
-        <StatCard label="Proximos do vencimento" value={data.certificates.dueSoon} icon={AlertTriangle} tone="yellow" to="/portal/certificados" />
-        <StatCard label="Certificados vencidos" value={data.certificates.expired} icon={ShieldX} tone="red" to="/portal/certificados" />
-        <StatCard label="Contratos ativos" value={data.activeContracts} icon={FileSignature} tone="navy" to="/portal/contratos" />
-        <StatCard label="Orcamentos/pedidos em aberto" value={data.openQuotesAndOrders} icon={ShoppingCart} tone="navy" to="/portal/pedidos" />
-      </div>
-
-      <div className="mt-6 grid gap-6 lg:grid-cols-2">
-        <div className="card p-5">
-          <h2 className="mb-3 font-semibold text-navy-900">Proximos servicos agendados</h2>
-          {data.upcomingServiceOrders.length === 0 ? (
-            <EmptyState title="Nada agendado" description="Voce nao tem servicos agendados no momento." />
-          ) : (
-            <ul className="divide-y divide-gray-100">
-              {data.upcomingServiceOrders.map((so) => (
-                <li key={so.id} className="flex items-center justify-between py-2.5 text-sm">
-                  <span className="text-graphite-700">{so.number} - {so.description.slice(0, 40)}</span>
-                  <span className="text-graphite-500">{formatDate(so.scheduledDate)}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-
-        <div className="card p-5">
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="flex items-center gap-2 font-semibold text-navy-900">
-              <FileWarning className="h-4 w-4" /> Ultimos laudos
-            </h2>
-            <Link to="/portal/laudos" className="text-sm text-navy-700 hover:underline">Ver todos</Link>
-          </div>
-          {data.recentReports.length === 0 ? (
-            <EmptyState title="Nenhum laudo disponivel" />
-          ) : (
-            <ul className="divide-y divide-gray-100">
-              {data.recentReports.map((r) => (
-                <li key={r.id} className="flex items-center justify-between py-2.5 text-sm">
-                  <div>
-                    <p className="text-graphite-700">{r.number}</p>
-                    <p className="text-xs text-graphite-400">{formatReportCategory(r.category)}</p>
-                  </div>
-                  <StatusBadge status={r.status} />
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+      <p className="mt-1 text-graphite-500">Sua empresa ainda nao tem o CMMS ativado.</p>
+      <div className="mt-6">
+        <EmptyState
+          title="Nenhum servico contratado"
+          description="Fale com o RLP Maintenance para ativar o CMMS na sua empresa."
+        />
       </div>
     </div>
-  );
-}
-
-function CompactStat({ label, value, to }: { label: string; value: number; to: string }) {
-  return (
-    <Link to={to} className="rounded-lg border border-gray-200 bg-white p-3 transition-colors hover:border-navy-200 hover:bg-navy-50/40">
-      <p className="text-lg font-bold text-navy-900">{value}</p>
-      <p className="text-xs text-graphite-500">{label}</p>
-    </Link>
   );
 }

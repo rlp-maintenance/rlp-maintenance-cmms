@@ -2,8 +2,6 @@ import type { LucideIcon } from "lucide-react";
 import {
   LayoutDashboard,
   Gauge,
-  BadgeCheck,
-  FileWarning,
   ClipboardList,
   ClipboardPlus,
   User,
@@ -25,7 +23,6 @@ import {
   HardHat,
   Droplet,
   LayoutGrid,
-  Briefcase,
   Settings,
   FileSpreadsheet,
 } from "lucide-react";
@@ -59,30 +56,15 @@ export interface PortalNavSection {
   defaultCollapsed?: boolean;
 }
 
-const ALL_SERVICES: ServiceCategory[] = [
-  "ELECTRICAL_MAINTENANCE",
-  "PANEL_MAINTENANCE",
-  "MOTOR_MAINTENANCE",
-  "TECHNICAL_REPORT",
-  "CALIBRATION",
-  "TECHNICAL_ASSISTANCE",
-  "EV_CHARGER",
-  "CMMS_MAINTENANCE",
-  "OTHER",
-];
-
 /**
  * O menu segue o dia a dia de quem opera a manutencao: primeiro o que se usa toda hora,
- * depois analise, depois o que a OptiProcess presta como servico, e por ultimo os
- * cadastros (que se configura uma vez). Catalogo nenhum ganha item proprio no menu -
- * todos ficam dentro de "Cadastros".
+ * depois analise, e por ultimo os cadastros (que se configura uma vez). Catalogo nenhum
+ * ganha item proprio no menu - todos ficam dentro de "Gestao".
  */
 const PORTAL_NAV_SECTIONS: PortalNavSection[] = [
   {
-    // Uma casa so. Para quem tem o CMMS, o painel do CMMS E' a pagina inicial - eram duas
-    // entradas para a mesma tela, uma no topo e outra dentro de "Operacional". Quem
-    // contratou so calibracao/laudos continua com o painel do portal, que mostra
-    // certificados e ordens de servico externas.
+    // Uma casa so: para quem tem o CMMS (todo cliente deste produto), o painel do CMMS
+    // E' a pagina inicial.
     items: [
       { to: "/portal/manutencao", label: "Painel do CMMS", icon: Wrench, requires: ["CMMS_MAINTENANCE"], exact: true },
       { to: "/portal", label: "Dashboard", icon: LayoutDashboard, semCmms: true },
@@ -128,23 +110,10 @@ const PORTAL_NAV_SECTIONS: PortalNavSection[] = [
       // funcoes da equipe precisam existir para o primeiro ativo ser cadastrado inteiro.
       // Ficava em "Configuracao", no rodape, como se fosse ajuste raro - e quem chegava
       // para cadastrar o parque so descobria os catalogos depois de tropecar neles.
-      { perfis: ["CLIENT", "CLIENT_PLANNER"], to: "/portal/instrumentos/cadastros", label: "Cadastros tecnicos", icon: SlidersHorizontal, requires: ["CALIBRATION", "CMMS_MAINTENANCE"] },
-      { to: "/portal/instrumentos", label: "Meus ativos", icon: Gauge, requires: ["CALIBRATION", "CMMS_MAINTENANCE"] },
+      { perfis: ["CLIENT", "CLIENT_PLANNER"], to: "/portal/instrumentos/cadastros", label: "Cadastros tecnicos", icon: SlidersHorizontal, requires: ["CMMS_MAINTENANCE"] },
+      { to: "/portal/instrumentos", label: "Meus ativos", icon: Gauge, requires: ["CMMS_MAINTENANCE"] },
       { to: "/portal/almoxarifado", label: "Almoxarifado", icon: Boxes, requires: ["CMMS_MAINTENANCE"] },
       { perfis: ["CLIENT", "CLIENT_PLANNER"], to: "/portal/manutencao/pareto", label: "Falhas e RCA", icon: BarChart3, requires: ["CMMS_MAINTENANCE"] },
-    ],
-  },
-  {
-    title: "Servicos OptiProcess",
-    icon: Briefcase,
-    defaultCollapsed: true,
-    items: [
-      // "Ordem de manutencao" (CMMS, executada pela propria equipe do cliente) e "ordens de
-      // servico" (atendimento tecnico feito pela OptiProcess) sao coisas diferentes - o
-      // rotulo deixa isso explicito para nao ficarem parecidas demais no menu.
-      { to: "/portal/ordens-servico", label: "Ordens de servico externas", icon: ClipboardList, requires: ALL_SERVICES },
-      { to: "/portal/certificados", label: "Certificados", icon: BadgeCheck, requires: ["CALIBRATION"] },
-      { to: "/portal/laudos", label: "Laudos tecnicos", icon: FileWarning, requires: ["TECHNICAL_REPORT"] },
     ],
   },
   {
@@ -180,7 +149,7 @@ export function getPortalNav(contractedServices: ServiceCategory[], role?: strin
       (item) =>
         (!item.requires || item.requires.some((c) => contractedServices.includes(c))) &&
         (!item.semCmms || !contractedServices.includes("CMMS_MAINTENANCE")) &&
-        // O ADMIN da OptiProcess entra por acesso master de suporte: ve tudo.
+        // O ADMIN da RLP Maintenance entra por acesso master de suporte: ve tudo.
         (!item.perfis || !role || role === "ADMIN" || item.perfis.includes(role as Role)),
     ),
   })).filter((section) => section.items.length > 0);

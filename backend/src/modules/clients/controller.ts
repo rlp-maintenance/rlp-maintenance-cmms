@@ -51,7 +51,7 @@ export const listClients = asyncHandler(async (req: Request, res: Response) => {
       where,
       orderBy: { companyName: "asc" },
       ...toSkipTake(pageParams),
-      include: { _count: { select: { instruments: true, serviceOrders: true, contracts: true } }, plan: { select: { id: true, name: true } } },
+      include: { _count: { select: { instruments: true } }, plan: { select: { id: true, name: true } } },
     }),
     prisma.client.count({ where }),
   ]);
@@ -108,7 +108,7 @@ export const getClient = asyncHandler(async (req: Request, res: Response) => {
         orderBy: { createdAt: "asc" },
       },
       _count: {
-        select: { instruments: true, serviceOrders: true, contracts: true, calibrations: true, orders: true },
+        select: { instruments: true },
       },
     },
   });
