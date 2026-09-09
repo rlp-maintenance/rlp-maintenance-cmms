@@ -10,8 +10,15 @@ name: Keep alive (Render)
 
 on:
   schedule:
-    # A cada 10 minutos (horario UTC; o GitHub pode atrasar alguns minutos em picos).
-    - cron: "*/10 * * * *"
+    # A cada 10 min, das 6h as 20h (horario de Brasilia), de segunda a sabado.
+    # O cron do GitHub e' em UTC, e Brasilia e' UTC-3: 9-22 UTC = 6h-19h59 daqui.
+    #
+    # Por que nao 24/7: o Free do Render da 750 horas de instancia por mes na conta
+    # inteira, e ficar acordado o mes todo consome 744h em meses de 31 dias - sobraria
+    # margem nenhuma, e um segundo servico free derrubaria os dois. Nesta janela o gasto
+    # cai para ~360h/mes. Fora do horario o sistema hiberna: quem entrar espera ~50s na
+    # primeira tela, e depois navega normal.
+    - cron: "*/10 9-22 * * 1-6"
   # Permite disparar na mao pela aba Actions para testar.
   workflow_dispatch:
 
