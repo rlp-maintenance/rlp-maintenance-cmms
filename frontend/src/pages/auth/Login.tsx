@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../auth/AuthContext";
 import { homeForRole } from "../../auth/ProtectedRoute";
 import { TextInput } from "../../components/form/Field";
@@ -70,6 +70,12 @@ export default function Login() {
             {isSubmitting ? "Entrando..." : "Entrar"}
           </button>
         </form>
+
+        <p className="mt-6 text-center text-sm text-graphite-500">
+          <Link to="/" className="hover:text-navy-700">
+            Voltar ao site
+          </Link>
+        </p>
       </div>
     </div>
   );

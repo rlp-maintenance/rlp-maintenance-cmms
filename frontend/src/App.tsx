@@ -1,11 +1,13 @@
 import { Suspense } from "react";
 import { lazyPagina } from "./lib/lazyPagina";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import { ToastProvider } from "./components/Toast";
 import { ProtectedRoute } from "./auth/ProtectedRoute";
 import { FullPageSpinner } from "./components/Spinner";
 import { ScrollToTop } from "./components/ScrollToTop";
+import { PublicLayout } from "./layouts/PublicLayout";
 
+import Home from "./pages/public/Home";
 import Login from "./pages/auth/Login";
 import NotFound from "./pages/NotFound";
 
@@ -77,7 +79,9 @@ export default function App() {
       <ScrollToTop />
       <Suspense fallback={<FullPageSpinner />}>
         <Routes>
-          <Route path="/" element={<Navigate to="/entrar" replace />} />
+          <Route element={<PublicLayout />}>
+            <Route path="/" element={<Home />} />
+          </Route>
           <Route path="/entrar" element={<Login />} />
 
           <Route element={<ProtectedRoute roles={["ADMIN", "TECHNICIAN", "COMMERCIAL"]} />}>
