@@ -26,6 +26,7 @@ const FEATURES = [
     icon: GitBranch,
     title: "Árvore de ativos",
     description: "Plantas, áreas e máquinas com estrutura pai/filho - cada componente é um ativo completo, com ficha técnica própria.",
+    to: "/gestao-de-ativos",
   },
   {
     icon: Radar,
@@ -41,6 +42,7 @@ const FEATURES = [
     icon: Droplets,
     title: "Lubrificação",
     description: "Pontos de lubrificação, rotas por área e previsão de consumo - o lubrificante certo, no ativo certo.",
+    to: "/lubrificacao",
   },
   {
     icon: ListChecks,
@@ -215,6 +217,14 @@ export default function Home() {
               </span>
               <h3 className="mt-4 font-bold text-navy-900">{f.title}</h3>
               <p className="mt-2 text-sm leading-relaxed text-graphite-500">{f.description}</p>
+              {f.to && (
+                <Link
+                  to={f.to}
+                  className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-navy-900 transition-colors hover:text-brand-lime-dark"
+                >
+                  Saiba mais <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+              )}
             </div>
           ))}
         </div>

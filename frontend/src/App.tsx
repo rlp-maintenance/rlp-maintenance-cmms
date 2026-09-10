@@ -8,6 +8,8 @@ import { ScrollToTop } from "./components/ScrollToTop";
 import { PublicLayout } from "./layouts/PublicLayout";
 
 import Home from "./pages/public/Home";
+import Lubrication from "./pages/public/Lubrication";
+import AssetManagement from "./pages/public/AssetManagement";
 import Login from "./pages/auth/Login";
 import NotFound from "./pages/NotFound";
 
@@ -81,6 +83,8 @@ export default function App() {
         <Routes>
           <Route element={<PublicLayout />}>
             <Route path="/" element={<Home />} />
+            <Route path="/lubrificacao" element={<Lubrication />} />
+            <Route path="/gestao-de-ativos" element={<AssetManagement />} />
           </Route>
           <Route path="/entrar" element={<Login />} />
 
