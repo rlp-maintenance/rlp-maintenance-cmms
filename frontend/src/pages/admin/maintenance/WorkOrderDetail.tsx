@@ -3,7 +3,7 @@ import { CONDICOES_DE_EXECUCAO } from "../../../lib/maintenanceLabels";
 import { centroDeCustoComDescricao } from "../../../lib/centroDeCusto";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Pencil, PlayCircle, CheckCircle2, Plus, X, Square, ShoppingCart, UserCheck } from "lucide-react";
+import { Pencil, PlayCircle, CheckCircle2, Plus, X, Square, ShoppingCart, UserCheck, Printer } from "lucide-react";
 import {
   getMaintenanceWorkOrder,
   updateMaintenanceWorkOrder,
@@ -42,6 +42,8 @@ import { useCmms } from "../../../lib/cmms";
 import { useToast } from "../../../components/Toast";
 import { getApiErrorMessage } from "../../../api/client";
 import { clientDisplayName, formatDateTime, formatCurrency } from "../../../lib/format";
+import { getClient, getOwnClient } from "../../../api/clients";
+import { imprimirOS } from "../../../lib/printWorkOrder";
 
 const RESULT_OPTIONS: { value: ChecklistItemResult; label: string; tone: string }[] = [
   { value: "OK", label: "OK", tone: "bg-green-50 text-safety-green-dark border-green-200" },
@@ -518,6 +520,18 @@ O que sobrar volta para o estoque.`,
   const thirdPartyCostKnown = (workOrder.thirdPartyServices ?? []).length > 0;
   const costSummaryKnown = partsCostKnown || laborCostKnown || thirdPartyCostKnown;
 
+  async function handlePrint(currentWorkOrder: MaintenanceWorkOrder) {
+    try {
+      // Portal (CLIENT*) so alcanca /clients/me; a equipe interna usa /clients/:id -
+      // mesma logo, dois jeitos de pedir, conforme quem esta olhando a tela.
+      const client = isClient ? await getOwnClient() : await getClient(currentWorkOrder.clientId);
+      imprimirOS(currentWorkOrder, client.logoUrl ?? null);
+    } catch {
+      // Sem logo nao impede a impressao - a OS sai sem marca, em vez de travar o botao.
+      imprimirOS(currentWorkOrder, null);
+    }
+  }
+
   return (
     <div>
       <PageHeader
@@ -529,8 +543,12 @@ O que sobrar volta para o estoque.`,
           { label: workOrder.number },
         ]}
         actions={
-          canManage && (
-            <>
+          <>
+            <button className="btn-outline" onClick={() => void handlePrint(workOrder)}>
+              <Printer className="h-4 w-4" /> Imprimir / PDF
+            </button>
+            {canManage && (
+              <>
               {/* Liberar e iniciar sao coisas diferentes: liberar e' dizer "pode fazer"
                   (maquina disponivel, material chegou, parada autorizada); iniciar e' a
                   ferramenta na mao, e e' dele que sai o MTTR. Quem libera assume a OS, se
@@ -558,8 +576,9 @@ O que sobrar volta para o estoque.`,
               {/* Nao existe "Remover": apagar a OS levaria junto as horas lancadas, o
                   material consumido e a falha registrada. O que se faz com uma OS que nao
                   sera executada e' CANCELAR, no seletor de situacao - o registro fica. */}
-            </>
-          )
+              </>
+            )}
+          </>
         }
       />
 
