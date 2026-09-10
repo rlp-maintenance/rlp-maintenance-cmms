@@ -24,6 +24,57 @@ interface DataTableProps<T> {
   onPageChange?: (page: number) => void;
 }
 
+/**
+ * Abaixo de md (768px) a tabela vira uma lista de cartoes - nao um <table> encolhido.
+ *
+ * O <table> largo com rolagem horizontal (unico jeito que isto renderizava antes) some
+ * inteiro; sem alternativa pra celular, colunas do fim (normalmente o status) saiam de
+ * tela sem nenhum aviso, so a barra de rolagem nativa pra descobrir que tinha mais coisa.
+ * Nenhuma tela que usa DataTable precisa saber disso - o mesmo array de `columns` alimenta
+ * as duas versoes.
+ *
+ * Coluna sem `header` (ex.: a caixinha de selecao) vira um controle solto no canto
+ * superior direito do cartao, em vez de um par rotulo/valor sem rotulo. A primeira coluna
+ * com rotulo vira o titulo do cartao; o resto entra numa grade compacta de rotulo/valor.
+ */
+function RowCards<T>({ columns, rows, keyField, onRowClick }: Pick<DataTableProps<T>, "columns" | "rows" | "keyField" | "onRowClick">) {
+  const controles = columns.filter((c) => !c.header);
+  const [titulo, ...resto] = columns.filter((c) => c.header);
+
+  return (
+    <div className="divide-y divide-gray-100 md:hidden">
+      {rows.map((row) => (
+        <div
+          key={keyField(row)}
+          onClick={onRowClick ? () => onRowClick(row) : undefined}
+          className={onRowClick ? "cursor-pointer p-4 active:bg-navy-50/60" : "p-4"}
+        >
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 flex-1 text-sm font-semibold text-navy-900">{titulo ? titulo.accessor(row) : null}</div>
+            {controles.length > 0 && (
+              <div className="flex shrink-0 items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                {controles.map((c, i) => (
+                  <span key={i}>{c.accessor(row)}</span>
+                ))}
+              </div>
+            )}
+          </div>
+          {resto.length > 0 && (
+            <div className="mt-2.5 grid grid-cols-2 gap-x-3 gap-y-2">
+              {resto.map((c) => (
+                <div key={c.header} className="min-w-0 text-xs">
+                  <span className="block text-graphite-400">{c.header}</span>
+                  <span className="mt-0.5 block truncate text-graphite-700">{c.accessor(row)}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function DataTable<T>({
   columns,
   rows,
@@ -54,7 +105,9 @@ export function DataTable<T>({
 
   return (
     <div className="table-shell">
-      <table className="table-base">
+      <RowCards columns={columns} rows={rows} keyField={keyField} onRowClick={onRowClick} />
+
+      <table className="table-base hidden md:table">
         <thead>
           <tr>
             {columns.map((col) => (
