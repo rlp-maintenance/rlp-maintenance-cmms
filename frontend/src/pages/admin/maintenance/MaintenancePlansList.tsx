@@ -54,6 +54,14 @@ export default function MaintenancePlansList() {
         pagination={data}
         onPageChange={setPage}
         emptyTitle="Nenhum plano de manutencao cadastrado"
+        emptyDescription="Monte o primeiro plano preventivo e atribua a um ou mais ativos."
+        emptyAction={
+          canManage && (
+            <button className="btn-primary btn-sm" onClick={() => navigate(`${base}/planos/novo`)}>
+              <Plus className="h-4 w-4" /> Novo plano
+            </button>
+          )
+        }
         columns={[
           { header: "Plano", accessor: (p) => <span className="font-medium text-navy-900">{p.name}</span> },
           ...(isClient ? [] : [{ header: "Cliente", accessor: (p: MaintenancePlan) => clientDisplayName(p.client) }]),

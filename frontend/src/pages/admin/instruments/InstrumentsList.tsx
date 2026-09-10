@@ -100,6 +100,14 @@ export default function InstrumentsList() {
         pagination={data}
         onPageChange={setPage}
         emptyTitle="Nenhum ativo cadastrado"
+        emptyDescription="Cadastre o primeiro ativo do parque para comecar a montar planos e ordens."
+        emptyAction={
+          canManage && (
+            <button className="btn-primary btn-sm" onClick={() => setCreateOpen(true)}>
+              <Plus className="h-4 w-4" /> Novo ativo
+            </button>
+          )
+        }
         columns={[
           {
             header: "Tag",

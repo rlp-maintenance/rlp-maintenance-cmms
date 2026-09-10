@@ -31,3 +31,25 @@ export function StatCard({ label, value, icon: Icon, tone = "navy", to }: StatCa
 
   return to ? <Link to={to}>{content}</Link> : content;
 }
+
+interface MiniStatProps {
+  label: string;
+  value: string | number;
+  hint?: string;
+  /** "red" destaca (atrasada, emergencial) - mesma cor em toda a familia de cards. */
+  tone?: "default" | "red";
+}
+
+/** Irma pequena do StatCard: mesma tipografia e espacamento, sem icone obrigatorio -
+ * usada em paineis com muitos indicadores (PCM, totais do periodo) onde um icone por
+ * card so acrescentaria ruido. Existe para as duas nao parecerem duas familias
+ * diferentes de card na mesma tela. */
+export function MiniStat({ label, value, hint, tone = "default" }: MiniStatProps) {
+  return (
+    <div className={`card p-5 transition-shadow hover:shadow-md ${tone === "red" ? "border-safety-red/30 bg-red-50/40" : ""}`}>
+      <p className="text-xs uppercase tracking-wide text-graphite-400">{label}</p>
+      <p className={`mt-1 text-2xl font-bold ${tone === "red" ? "text-safety-red" : "text-navy-900"}`}>{value}</p>
+      {hint && <p className="mt-0.5 text-xs text-graphite-400">{hint}</p>}
+    </div>
+  );
+}

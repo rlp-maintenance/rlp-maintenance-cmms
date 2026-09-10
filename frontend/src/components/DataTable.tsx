@@ -16,6 +16,9 @@ interface DataTableProps<T> {
   loading?: boolean;
   emptyTitle?: string;
   emptyDescription?: string;
+  /** Botao de acao mostrado junto do estado vazio (ex.: "Novo cliente") - convida a
+   * primeira acao em vez de so avisar que nao ha nada. */
+  emptyAction?: ReactNode;
   onRowClick?: (row: T) => void;
   pagination?: Pick<PagedResult<unknown>, "page" | "pageSize" | "total" | "totalPages">;
   onPageChange?: (page: number) => void;
@@ -28,6 +31,7 @@ export function DataTable<T>({
   loading,
   emptyTitle = "Nenhum registro encontrado",
   emptyDescription,
+  emptyAction,
   onRowClick,
   pagination,
   onPageChange,
@@ -45,7 +49,7 @@ export function DataTable<T>({
   }
 
   if (rows.length === 0) {
-    return <EmptyState title={emptyTitle} description={emptyDescription} />;
+    return <EmptyState title={emptyTitle} description={emptyDescription} action={emptyAction} />;
   }
 
   return (

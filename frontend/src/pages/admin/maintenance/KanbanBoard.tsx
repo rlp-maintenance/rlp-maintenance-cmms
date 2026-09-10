@@ -12,17 +12,26 @@ import { useToast } from "../../../components/Toast";
 import { getApiErrorMessage } from "../../../api/client";
 import { useCmms } from "../../../lib/cmms";
 
-const COLUMNS: { status: MaintenanceOrderStatus; label: string }[] = [
-  { status: "OPEN", label: "Aberta" },
-  { status: "IN_TRIAGE", label: "Em triagem" },
-  { status: "PLANNED", label: "Planejada" },
-  { status: "PROGRAMMED", label: "Programada" },
-  { status: "RELEASED", label: "Liberada" },
-  { status: "IN_PROGRESS", label: "Em execucao" },
-  { status: "AWAITING_MATERIAL", label: "Aguardando material" },
-  { status: "AWAITING_RELEASE", label: "Aguardando liberacao" },
-  { status: "AWAITING_STOPPAGE", label: "Aguardando parada" },
-  { status: "COMPLETED", label: "Concluida" },
+// Mesma paleta semantica do StatusBadge - agrupa visualmente o estagio do fluxo:
+// grafite (fila), navy (planejada/liberada), amarelo (em movimento/bloqueada), verde (feita).
+const COLUMN_TONE_CLASSES = {
+  graphite: "border-t-graphite-300 bg-graphite-50",
+  navy: "border-t-navy-400 bg-navy-50/60",
+  yellow: "border-t-safety-yellow bg-amber-50/60",
+  green: "border-t-safety-green bg-green-50/60",
+} as const;
+
+const COLUMNS: { status: MaintenanceOrderStatus; label: string; tone: keyof typeof COLUMN_TONE_CLASSES }[] = [
+  { status: "OPEN", label: "Aberta", tone: "graphite" },
+  { status: "IN_TRIAGE", label: "Em triagem", tone: "yellow" },
+  { status: "PLANNED", label: "Planejada", tone: "navy" },
+  { status: "PROGRAMMED", label: "Programada", tone: "navy" },
+  { status: "RELEASED", label: "Liberada", tone: "navy" },
+  { status: "IN_PROGRESS", label: "Em execucao", tone: "yellow" },
+  { status: "AWAITING_MATERIAL", label: "Aguardando material", tone: "yellow" },
+  { status: "AWAITING_RELEASE", label: "Aguardando liberacao", tone: "yellow" },
+  { status: "AWAITING_STOPPAGE", label: "Aguardando parada", tone: "yellow" },
+  { status: "COMPLETED", label: "Concluida", tone: "green" },
 ];
 
 // "Concluida" fica de fora do seletor rapido do cartao - so pela ficha da OS (botao
@@ -94,10 +103,10 @@ export default function KanbanBoard() {
             {COLUMNS.map((col) => {
               const colItems = items.filter((w) => w.status === col.status);
               return (
-                <div key={col.status} className="w-64 shrink-0">
+                <div key={col.status} className={`w-64 shrink-0 rounded-lg border-t-4 p-2.5 ${COLUMN_TONE_CLASSES[col.tone]}`}>
                   <div className="mb-2 flex items-center justify-between px-1">
                     <h3 className="text-sm font-semibold text-navy-900">{col.label}</h3>
-                    <span className="rounded-full bg-navy-50 px-2 py-0.5 text-xs font-medium text-navy-700">{colItems.length}</span>
+                    <span className="rounded-full bg-white px-2 py-0.5 text-xs font-semibold text-navy-700 shadow-sm">{colItems.length}</span>
                   </div>
                   <div className="space-y-2">
                     {colItems.map((w) => (

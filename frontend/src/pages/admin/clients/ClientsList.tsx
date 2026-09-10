@@ -90,6 +90,13 @@ export default function ClientsList() {
         onPageChange={setPage}
         emptyTitle="Nenhum cliente cadastrado"
         emptyDescription="Cadastre o primeiro cliente para comecar."
+        emptyAction={
+          canManage && (
+            <button className="btn-primary btn-sm" onClick={() => setCreateOpen(true)}>
+              <Plus className="h-4 w-4" /> Novo cliente
+            </button>
+          )
+        }
         columns={[
           { header: "Empresa", accessor: (c) => <span className="font-medium text-navy-900">{clientDisplayName(c)}</span> },
           { header: "Cidade", accessor: (c) => c.addressCity ?? "-" },

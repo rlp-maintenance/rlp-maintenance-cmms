@@ -87,6 +87,14 @@ export default function WorkOrdersList() {
         pagination={data}
         onPageChange={setPage}
         emptyTitle="Nenhuma ordem de manutencao"
+        emptyDescription="Ordens nascem sozinhas dos planos preventivos, ou crie uma corretiva na hora."
+        emptyAction={
+          canManage && (
+            <button className="btn-primary btn-sm" onClick={() => navigate(`${base}/ordens/novo`)}>
+              <Plus className="h-4 w-4" /> Nova ordem
+            </button>
+          )
+        }
         columns={[
           { header: "Numero", accessor: (o) => <span className="font-medium text-navy-900">{o.number}</span> },
           ...(isClient ? [] : [{ header: "Cliente", accessor: (o: MaintenanceWorkOrder) => clientDisplayName(o.client) }]),

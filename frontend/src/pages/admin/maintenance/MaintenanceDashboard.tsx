@@ -2,16 +2,36 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { Wrench, Gauge, ClipboardList, ClipboardPlus, ShieldCheck, Activity, TimerReset, Boxes, GitBranch, Radar, HardHat, Kanban, BarChart3, Search, CalendarDays, SlidersHorizontal } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { getMaintenanceDashboard, getMaintenanceBacklog } from "../../../api/maintenanceWorkOrders";
 import type { BacklogGroupBy } from "../../../api/types";
 import { EmptyState } from "../../../components/EmptyState";
+import { PageHeader } from "../../../components/PageHeader";
 import { listClients, getOwnClient } from "../../../api/clients";
 
-import { CmmsLogo } from "../../../components/CmmsLogo";
-import { StatCard } from "../../../components/StatCard";
+import { StatCard, MiniStat } from "../../../components/StatCard";
 import { FullPageSpinner } from "../../../components/Spinner";
 import { clientDisplayName, formatKpi } from "../../../lib/format";
 import { useCmms } from "../../../lib/cmms";
+
+/** Um item da navegacao interna do hub - mesmo componente para as rotas do dia a dia
+ * e as de analise, so muda o peso visual (`primary`). Antes eram 3 fileiras com 3
+ * estilos diferentes (botao outline, botao outline de novo, link de texto solto) para
+ * a mesma coisa: navegar para outra tela deste modulo. */
+function NavPill({ to, icon: Icon, label, primary }: { to: string; icon: LucideIcon; label: string; primary?: boolean }) {
+  return (
+    <Link
+      to={to}
+      className={
+        primary
+          ? "inline-flex items-center gap-1.5 rounded-md border border-navy-200 bg-white px-3 py-2 text-sm font-medium text-navy-800 shadow-sm transition-colors hover:bg-navy-50"
+          : "inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium text-graphite-600 transition-colors hover:bg-gray-100 hover:text-navy-800"
+      }
+    >
+      <Icon className={primary ? "h-4 w-4" : "h-3.5 w-3.5"} /> {label}
+    </Link>
+  );
+}
 
 /** Como o backlog aparece na tela para cada agrupamento. */
 const ROTULO_AGRUPAMENTO: Record<BacklogGroupBy, string> = {
@@ -53,71 +73,49 @@ export default function MaintenanceDashboard() {
 
   return (
     <div>
-      {/* O CMMS e' produto proprio: o painel dele abre com a marca do produto, nao com a
-          da OptiProcess (que segue como marca principal do site e da gestao). */}
-      <div className="mb-6">
-        {logoDoCliente ? (
-          <img src={logoDoCliente} alt="Logo da empresa" className="h-16 w-auto max-w-[14rem] object-contain" />
-        ) : (
-          <CmmsLogo size="lg" />
-        )}
-        <p className="mt-2 text-sm text-graphite-500">
-          Ciclo completo de manutencao - planos preventivos, ordens, pecas e indicadores (ultimos 90 dias)
-        </p>
-      </div>
+      <PageHeader
+        title="Manutencao"
+        description="Ciclo completo de manutencao - planos preventivos, ordens, pecas e indicadores (ultimos 90 dias)"
+        actions={
+          logoDoCliente && (
+            <img src={logoDoCliente} alt="Logo da empresa" className="h-10 w-auto max-w-[9rem] object-contain" />
+          )
+        }
+      />
 
-      <div className="mb-6 flex flex-wrap items-center gap-3">
-        {!isClient && (
+      {!isClient && (
+        <div className="mb-4">
           <select className="input sm:w-72" value={clientId} onChange={(e) => setClientId(e.target.value)}>
             <option value="">Todos os clientes</option>
             {(clients?.items ?? []).map((c) => (
               <option key={c.id} value={c.id}>{clientDisplayName(c)}</option>
             ))}
           </select>
-        )}
-        <Link to={`${base}/solicitacoes${clientId ? `?clientId=${clientId}` : ""}`} className="btn-outline">
-          <ClipboardPlus className="h-4 w-4" /> Solicitacoes
-        </Link>
-        <Link to={`${base}/ordens${clientId ? `?clientId=${clientId}` : ""}`} className="btn-outline">
-          <ClipboardList className="h-4 w-4" /> Ordens
-        </Link>
-        <Link to={`${base}/programacao`} className="btn-outline">
-          <CalendarDays className="h-4 w-4" /> Programacao
-        </Link>
-        <Link to={`${base}/kanban${clientId ? `?clientId=${clientId}` : ""}`} className="btn-outline">
-          <Kanban className="h-4 w-4" /> Kanban
-        </Link>
-        <Link to={`${base}/planos${clientId ? `?clientId=${clientId}` : ""}`} className="btn-outline">
-          <ShieldCheck className="h-4 w-4" /> Planos preventivos
-        </Link>
-        <Link to={`${assetsBase}?scope=cmms${clientId ? `&clientId=${clientId}` : ""}`} className="btn-outline">
-          <Gauge className="h-4 w-4" /> Ativos
-        </Link>
-        <Link to={`${partsBase}${!isClient && clientId ? `?clientId=${clientId}` : ""}`} className="btn-outline">
-          <Boxes className="h-4 w-4" /> Almoxarifado
-        </Link>
-        <Link to={`${assetsBase}/cadastros`} className="btn-outline">
-          <SlidersHorizontal className="h-4 w-4" /> Cadastros
-        </Link>
-      </div>
+        </div>
+      )}
 
-      {/* Segunda linha: analise e visoes secundarias - usadas menos que a operacao acima. */}
-      <div className="mb-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
-        <Link to={`${base}/pareto${clientId ? `?clientId=${clientId}` : ""}`} className="inline-flex items-center gap-1.5 text-graphite-600 hover:text-navy-700">
-          <BarChart3 className="h-4 w-4" /> Pareto de falhas
-        </Link>
-        <Link to={`${base}/rca${clientId ? `?clientId=${clientId}` : ""}`} className="inline-flex items-center gap-1.5 text-graphite-600 hover:text-navy-700">
-          <Search className="h-4 w-4" /> RCA / 5 Porques
-        </Link>
-        <Link to={`${base}/arvore${clientId ? `?clientId=${clientId}` : ""}`} className="inline-flex items-center gap-1.5 text-graphite-600 hover:text-navy-700">
-          <GitBranch className="h-4 w-4" /> Arvore de ativos
-        </Link>
-        <Link to={`${base}/preditiva${clientId ? `?clientId=${clientId}` : ""}`} className="inline-flex items-center gap-1.5 text-graphite-600 hover:text-navy-700">
-          <Radar className="h-4 w-4" /> Manutencao preditiva
-        </Link>
-        <Link to={`${laborBase}${!isClient && clientId ? `?clientId=${clientId}` : ""}`} className="inline-flex items-center gap-1.5 text-graphite-600 hover:text-navy-700">
-          <HardHat className="h-4 w-4" /> Mao de obra
-        </Link>
+      {/* Navegacao do modulo, num unico peso visual - antes eram tres fileiras com tres
+          estilos diferentes (botao, botao de novo, link solto) pra mesma coisa: trocar de
+          tela dentro do CMMS. Operacional primeiro (o que se usa toda hora), analise depois. */}
+      <div className="mb-6 space-y-2 rounded-lg border border-gray-100 bg-gray-50/60 p-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <NavPill primary to={`${base}/solicitacoes${clientId ? `?clientId=${clientId}` : ""}`} icon={ClipboardPlus} label="Solicitacoes" />
+          <NavPill primary to={`${base}/ordens${clientId ? `?clientId=${clientId}` : ""}`} icon={ClipboardList} label="Ordens" />
+          <NavPill primary to={`${base}/programacao`} icon={CalendarDays} label="Programacao" />
+          <NavPill primary to={`${base}/kanban${clientId ? `?clientId=${clientId}` : ""}`} icon={Kanban} label="Kanban" />
+          <NavPill primary to={`${base}/planos${clientId ? `?clientId=${clientId}` : ""}`} icon={ShieldCheck} label="Planos preventivos" />
+          <NavPill primary to={`${assetsBase}?scope=cmms${clientId ? `&clientId=${clientId}` : ""}`} icon={Gauge} label="Ativos" />
+          <NavPill primary to={`${partsBase}${!isClient && clientId ? `?clientId=${clientId}` : ""}`} icon={Boxes} label="Almoxarifado" />
+          <NavPill primary to={`${assetsBase}/cadastros`} icon={SlidersHorizontal} label="Cadastros" />
+        </div>
+        <div className="flex flex-wrap items-center gap-x-1 gap-y-1 border-t border-gray-200 pt-2">
+          <span className="mr-1 text-xs font-semibold uppercase tracking-wide text-graphite-400">Analises</span>
+          <NavPill to={`${base}/pareto${clientId ? `?clientId=${clientId}` : ""}`} icon={BarChart3} label="Pareto de falhas" />
+          <NavPill to={`${base}/rca${clientId ? `?clientId=${clientId}` : ""}`} icon={Search} label="RCA / 5 Porques" />
+          <NavPill to={`${base}/arvore${clientId ? `?clientId=${clientId}` : ""}`} icon={GitBranch} label="Arvore de ativos" />
+          <NavPill to={`${base}/preditiva${clientId ? `?clientId=${clientId}` : ""}`} icon={Radar} label="Manutencao preditiva" />
+          <NavPill to={`${laborBase}${!isClient && clientId ? `?clientId=${clientId}` : ""}`} icon={HardHat} label="Mao de obra" />
+        </div>
       </div>
 
       {isLoading || !data ? (
@@ -132,81 +130,37 @@ export default function MaintenanceDashboard() {
           </div>
 
           <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <div className="card p-5">
-              <p className="text-xs uppercase tracking-wide text-graphite-400">Ordens abertas</p>
-              <p className="mt-1 text-2xl font-bold text-navy-900">{data.totals.open}</p>
-            </div>
-            <div className="card p-5">
-              <p className="text-xs uppercase tracking-wide text-graphite-400">Em andamento</p>
-              <p className="mt-1 text-2xl font-bold text-navy-900">{data.totals.inProgress}</p>
-            </div>
-            <div className="card p-5">
-              <p className="text-xs uppercase tracking-wide text-graphite-400">Concluidas (periodo)</p>
-              <p className="mt-1 text-2xl font-bold text-navy-900">{data.totals.completed}</p>
-            </div>
-            <div className="card p-5">
-              <p className="text-xs uppercase tracking-wide text-graphite-400">Preventivas (periodo)</p>
-              <p className="mt-1 text-2xl font-bold text-navy-900">{data.totals.preventive}</p>
-            </div>
-            <div className="card p-5">
-              <p className="text-xs uppercase tracking-wide text-graphite-400">Corretivas (periodo)</p>
-              <p className="mt-1 text-2xl font-bold text-navy-900">{data.totals.corrective}</p>
-            </div>
-            <div className="card p-5">
-              <p className="text-xs uppercase tracking-wide text-graphite-400">Preditivas (periodo)</p>
-              <p className="mt-1 text-2xl font-bold text-navy-900">{data.totals.predictive}</p>
-              {data.totals.predictive > 0 && (
-                <p className="mt-0.5 text-xs text-graphite-400">{data.totals.predictiveAutoOpened} abertas sozinhas por medidor</p>
-              )}
-            </div>
-            <div className="card p-5">
-              <p className="text-xs uppercase tracking-wide text-graphite-400">Total de OS (periodo)</p>
-              <p className="mt-1 text-2xl font-bold text-navy-900">{data.totals.workOrders}</p>
-            </div>
+            <MiniStat label="Ordens abertas" value={data.totals.open} />
+            <MiniStat label="Em andamento" value={data.totals.inProgress} />
+            <MiniStat label="Concluidas (periodo)" value={data.totals.completed} />
+            <MiniStat label="Preventivas (periodo)" value={data.totals.preventive} />
+            <MiniStat label="Corretivas (periodo)" value={data.totals.corrective} />
+            <MiniStat
+              label="Preditivas (periodo)"
+              value={data.totals.predictive}
+              hint={data.totals.predictive > 0 ? `${data.totals.predictiveAutoOpened} abertas sozinhas por medidor` : undefined}
+            />
+            <MiniStat label="Total de OS (periodo)" value={data.totals.workOrders} />
           </div>
 
           <h2 className="mb-3 mt-8 font-semibold text-navy-900">PCM - planejamento e controle</h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="card p-5">
-              <p className="text-xs uppercase tracking-wide text-graphite-400">Backlog</p>
-              <p className="mt-1 text-2xl font-bold text-navy-900">{data.pcm.backlogHours}h</p>
-              {data.pcm.openWithoutEstimate > 0 && (
-                <p className="mt-0.5 text-xs text-graphite-400">{data.pcm.openWithoutEstimate} OS em aberto sem HH prevista (fora da conta)</p>
-              )}
-            </div>
-            <div className={`card p-5 ${data.pcm.overdue > 0 ? "border-safety-red/30 bg-red-50/40" : ""}`}>
-              <p className="text-xs uppercase tracking-wide text-graphite-400">Atrasadas</p>
-              <p className={`mt-1 text-2xl font-bold ${data.pcm.overdue > 0 ? "text-safety-red" : "text-navy-900"}`}>{data.pcm.overdue}</p>
-            </div>
-            <div className={`card p-5 ${data.pcm.emergency > 0 ? "border-safety-red/30 bg-red-50/40" : ""}`}>
-              <p className="text-xs uppercase tracking-wide text-graphite-400">Emergenciais (criticas, em aberto)</p>
-              <p className={`mt-1 text-2xl font-bold ${data.pcm.emergency > 0 ? "text-safety-red" : "text-navy-900"}`}>{data.pcm.emergency}</p>
-            </div>
-            <div className="card p-5">
-              <p className="text-xs uppercase tracking-wide text-graphite-400">Aderencia a programacao</p>
-              <p className="mt-1 text-2xl font-bold text-navy-900">
-                {data.pcm.scheduleAdherencePct != null ? `${data.pcm.scheduleAdherencePct}%` : "Dados insuficientes"}
-              </p>
-              {data.pcm.scheduleAdherencePct != null && (
-                <p className="mt-0.5 text-xs text-graphite-400">{data.pcm.scheduledCompletedCount} OS programadas concluidas no periodo</p>
-              )}
-            </div>
-            <div className="card p-5">
-              <p className="text-xs uppercase tracking-wide text-graphite-400">Aguardando material</p>
-              <p className="mt-1 text-2xl font-bold text-navy-900">{data.pcm.awaitingMaterial}</p>
-            </div>
-            <div className="card p-5">
-              <p className="text-xs uppercase tracking-wide text-graphite-400">Aguardando liberacao</p>
-              <p className="mt-1 text-2xl font-bold text-navy-900">{data.pcm.awaitingRelease}</p>
-            </div>
-            <div className="card p-5">
-              <p className="text-xs uppercase tracking-wide text-graphite-400">Aguardando parada</p>
-              <p className="mt-1 text-2xl font-bold text-navy-900">{data.pcm.awaitingStoppage}</p>
-            </div>
-            <div className="card p-5">
-              <p className="text-xs uppercase tracking-wide text-graphite-400">HH prevista x realizada (concluidas)</p>
-              <p className="mt-1 text-2xl font-bold text-navy-900">{data.pcm.plannedHoursCompleted}h / {data.pcm.actualHoursCompleted}h</p>
-            </div>
+            <MiniStat
+              label="Backlog"
+              value={`${data.pcm.backlogHours}h`}
+              hint={data.pcm.openWithoutEstimate > 0 ? `${data.pcm.openWithoutEstimate} OS em aberto sem HH prevista (fora da conta)` : undefined}
+            />
+            <MiniStat label="Atrasadas" value={data.pcm.overdue} tone={data.pcm.overdue > 0 ? "red" : "default"} />
+            <MiniStat label="Emergenciais (criticas, em aberto)" value={data.pcm.emergency} tone={data.pcm.emergency > 0 ? "red" : "default"} />
+            <MiniStat
+              label="Aderencia a programacao"
+              value={data.pcm.scheduleAdherencePct != null ? `${data.pcm.scheduleAdherencePct}%` : "Dados insuficientes"}
+              hint={data.pcm.scheduleAdherencePct != null ? `${data.pcm.scheduledCompletedCount} OS programadas concluidas no periodo` : undefined}
+            />
+            <MiniStat label="Aguardando material" value={data.pcm.awaitingMaterial} />
+            <MiniStat label="Aguardando liberacao" value={data.pcm.awaitingRelease} />
+            <MiniStat label="Aguardando parada" value={data.pcm.awaitingStoppage} />
+            <MiniStat label="HH prevista x realizada (concluidas)" value={`${data.pcm.plannedHoursCompleted}h / ${data.pcm.actualHoursCompleted}h`} />
           </div>
 
           {/* Backlog aberto: o total sozinho nao diz onde esta a fila. Aqui da pra ver que
