@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Pencil, Plus, Trash2, CornerLeftUp, AlertTriangle } from "lucide-react";
+import { Pencil, Plus, Trash2, CornerLeftUp, AlertTriangle, QrCode } from "lucide-react";
 import { getInstrument, listAssetParts, addAssetPart, removeAssetPart, getInstrumentPartsHistory, getInstrumentCostSummary, deleteInstrument, getImpactoDaRemocao } from "../../api/instruments";
 import type { ImpactoDaRemocao } from "../../api/instruments";
 import { listSpareParts } from "../../api/spareParts";
@@ -18,6 +18,7 @@ import { areaComCentroDeCusto } from "../../lib/centroDeCusto";
 import { EmptyState } from "../../components/EmptyState";
 import { PortalInstrumentFormModal } from "./PortalInstrumentFormModal";
 import { ConfirmDialog } from "../../components/ConfirmDialog";
+import { AssetQrModal } from "../../components/AssetQrModal";
 import { MeterFormModal } from "../admin/instruments/MeterFormModal";
 import { InstrumentAttachments } from "../../components/InstrumentAttachments";
 import { AssetPhoto } from "../../components/AssetPhoto";
@@ -62,6 +63,7 @@ export default function PortalInstrumentDetail() {
   const [addChildOpen, setAddChildOpen] = useState(false);
   const [meterModalOpen, setMeterModalOpen] = useState(false);
   const [selectedSparePartId, setSelectedSparePartId] = useState("");
+  const [qrOpen, setQrOpen] = useState(false);
   const [confirmarRemocao, setConfirmarRemocao] = useState(false);
   const [removendo, setRemovendo] = useState(false);
   const { data: instrument, isLoading } = useQuery({ queryKey: ["portal-instrument", id], queryFn: () => getInstrument(id) });
@@ -182,6 +184,9 @@ export default function PortalInstrumentDetail() {
         breadcrumbs={[{ label: "Meus ativos", to: "/portal/instrumentos" }, { label: instrument.tag ?? instrument.type }]}
         actions={
           <>
+            <button className="btn-outline" onClick={() => setQrOpen(true)}>
+              <QrCode className="h-4 w-4" /> QR Code
+            </button>
             <button className="btn-outline" onClick={() => setEditOpen(true)}>
               <Pencil className="h-4 w-4" /> Editar
             </button>
@@ -190,6 +195,14 @@ export default function PortalInstrumentDetail() {
             </button>
           </>
         }
+      />
+
+      <AssetQrModal
+        open={qrOpen}
+        onClose={() => setQrOpen(false)}
+        tag={instrument.tag}
+        description={instrument.description}
+        path={`/portal/instrumentos/${instrument.id}`}
       />
 
       {instrument.parent && (

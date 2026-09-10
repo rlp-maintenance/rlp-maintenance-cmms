@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { Wrench, Gauge, ClipboardList, ClipboardPlus, ShieldCheck, Activity, TimerReset, Boxes, GitBranch, Radar, HardHat, Kanban, BarChart3, Search, CalendarDays, SlidersHorizontal } from "lucide-react";
+import { Wrench, Gauge, ClipboardList, ClipboardPlus, ShieldCheck, Activity, TimerReset, Boxes, GitBranch, Radar, HardHat, Kanban, BarChart3, Search, CalendarDays, SlidersHorizontal, Download } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { getMaintenanceDashboard, getMaintenanceBacklog } from "../../../api/maintenanceWorkOrders";
 import type { BacklogGroupBy } from "../../../api/types";
@@ -13,6 +13,7 @@ import { StatCard, MiniStat } from "../../../components/StatCard";
 import { FullPageSpinner } from "../../../components/Spinner";
 import { clientDisplayName, formatKpi } from "../../../lib/format";
 import { useCmms } from "../../../lib/cmms";
+import { buildCsv, downloadCsv } from "../../../lib/csvExport";
 
 /** Um item da navegacao interna do hub - mesmo componente para as rotas do dia a dia
  * e as de analise, so muda o peso visual (`primary`). Antes eram 3 fileiras com 3
@@ -71,15 +72,63 @@ export default function MaintenanceDashboard() {
     queryFn: () => getMaintenanceBacklog({ clientId: clientId || undefined, groupBy: agrupamento }),
   });
 
+  function exportarIndicadoresCsv() {
+    if (!data) return;
+    const kpiRows = [
+      { indicador: "MTTR (horas)", valor: formatKpi(data.kpis.mttrHours) },
+      { indicador: "MTBF (horas)", valor: formatKpi(data.kpis.mtbfHours) },
+      { indicador: "Disponibilidade (%)", valor: formatKpi(data.kpis.availabilityPct) },
+      { indicador: "Cumprimento do plano (%)", valor: formatKpi(data.kpis.planComplianceRatePct) },
+      { indicador: "Ordens abertas", valor: data.totals.open },
+      { indicador: "Em andamento", valor: data.totals.inProgress },
+      { indicador: "Concluidas (periodo)", valor: data.totals.completed },
+      { indicador: "Preventivas (periodo)", valor: data.totals.preventive },
+      { indicador: "Corretivas (periodo)", valor: data.totals.corrective },
+      { indicador: "Preditivas (periodo)", valor: data.totals.predictive },
+      { indicador: "Backlog (horas)", valor: data.pcm.backlogHours },
+      { indicador: "Atrasadas", valor: data.pcm.overdue },
+      { indicador: "Emergenciais em aberto", valor: data.pcm.emergency },
+    ];
+    const kpiCsv = buildCsv(kpiRows, [
+      { label: "Indicador", value: (r) => r.indicador },
+      { label: "Valor", value: (r) => r.valor },
+    ]);
+
+    const backlogRows = backlog?.itens ?? [];
+    const backlogCsv =
+      backlogRows.length > 0
+        ? buildCsv(backlogRows, [
+            { label: ROTULO_AGRUPAMENTO[agrupamento], value: (i) => i.nome },
+            { label: "Backlog (h)", value: (i) => i.horas },
+            { label: "OS abertas", value: (i) => i.ordens },
+            { label: "Sem HH", value: (i) => i.semEstimativa },
+            { label: "Atrasadas", value: (i) => i.atrasadas },
+            { label: "Emergenciais", value: (i) => i.emergenciais },
+            { label: "Corretivas", value: (i) => i.corretivas },
+            { label: "Preventivas", value: (i) => i.preventivas },
+          ])
+        : "";
+
+    const csv = backlogCsv ? `${kpiCsv}\r\n\r\nBacklog por ${ROTULO_AGRUPAMENTO[agrupamento].toLowerCase()}\r\n${backlogCsv}` : kpiCsv;
+    downloadCsv(`indicadores-manutencao-${new Date().toISOString().slice(0, 10)}.csv`, csv);
+  }
+
   return (
     <div>
       <PageHeader
         title="Manutencao"
         description="Ciclo completo de manutencao - planos preventivos, ordens, pecas e indicadores (ultimos 90 dias)"
         actions={
-          logoDoCliente && (
-            <img src={logoDoCliente} alt="Logo da empresa" className="h-10 w-auto max-w-[9rem] object-contain" />
-          )
+          <>
+            {data && (
+              <button className="btn-outline" onClick={exportarIndicadoresCsv}>
+                <Download className="h-4 w-4" /> Exportar CSV
+              </button>
+            )}
+            {logoDoCliente && (
+              <img src={logoDoCliente} alt="Logo da empresa" className="h-10 w-auto max-w-[9rem] object-contain" />
+            )}
+          </>
         }
       />
 

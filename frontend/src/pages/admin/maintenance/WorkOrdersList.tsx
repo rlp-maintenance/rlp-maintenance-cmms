@@ -1,16 +1,23 @@
 import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, Download } from "lucide-react";
 import { listMaintenanceWorkOrders } from "../../../api/maintenanceWorkOrders";
 import type { MaintenanceOrderStatus, MaintenanceOrderType, MaintenanceWorkOrder } from "../../../api/types";
 import { PageHeader } from "../../../components/PageHeader";
 import { DataTable } from "../../../components/DataTable";
-import { StatusBadge } from "../../../components/StatusBadge";
+import { StatusBadge, statusLabel } from "../../../components/StatusBadge";
 import { clientDisplayName, formatDate } from "../../../lib/format";
 import { useCmms } from "../../../lib/cmms";
+import { buildCsv, downloadCsv } from "../../../lib/csvExport";
+import { useToast } from "../../../components/Toast";
 
 import { rotuloDoTipo } from "../../../lib/maintenanceLabels";
+
+/** Teto de paginas buscadas pra exportar - 100 por pagina (limite da API), ate 20 paginas
+ * (2.000 ordens). Cobre qualquer exportacao real sem deixar a tela travada buscando pra
+ * sempre num filtro largo demais. */
+const MAX_EXPORT_PAGES = 20;
 
 export default function WorkOrdersList() {
   const navigate = useNavigate();
@@ -18,6 +25,7 @@ export default function WorkOrdersList() {
   const clientId = searchParams.get("clientId") ?? undefined;
   const instrumentId = searchParams.get("instrumentId") ?? undefined;
   const { canManage, isClient, base } = useCmms();
+  const { notify } = useToast();
 
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<MaintenanceOrderStatus | "">("");
@@ -25,12 +33,47 @@ export default function WorkOrdersList() {
   // um filtro comum - o usuario pode trocar para outro tipo ou limpar normalmente.
   const [type, setType] = useState<MaintenanceOrderType | "">((searchParams.get("type") as MaintenanceOrderType) || "");
   const [page, setPage] = useState(1);
+  const [exporting, setExporting] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ["maintenance-work-orders", search, status, type, page, clientId, instrumentId],
     queryFn: () =>
       listMaintenanceWorkOrders({ search: search || undefined, status: status || undefined, type: type || undefined, page, pageSize: 15, clientId, instrumentId }),
   });
+
+  async function exportarCsv() {
+    setExporting(true);
+    try {
+      const filtros = { search: search || undefined, status: status || undefined, type: type || undefined, clientId, instrumentId };
+      const todas: MaintenanceWorkOrder[] = [];
+      let paginaAtual = 1;
+      let totalPaginas = 1;
+      do {
+        const resultado = await listMaintenanceWorkOrders({ ...filtros, page: paginaAtual, pageSize: 100 });
+        todas.push(...resultado.items);
+        totalPaginas = resultado.totalPages;
+        paginaAtual += 1;
+      } while (paginaAtual <= totalPaginas && paginaAtual <= MAX_EXPORT_PAGES);
+
+      if (todas.length === 0) {
+        notify("error", "Nenhuma ordem para exportar com este filtro.");
+        return;
+      }
+
+      const csv = buildCsv(todas, [
+        { label: "Numero", value: (o) => o.number },
+        ...(isClient ? [] : [{ label: "Cliente", value: (o: MaintenanceWorkOrder) => clientDisplayName(o.client) }]),
+        { label: "Ativo", value: (o) => o.instrument?.tag ?? "" },
+        { label: "Tipo", value: (o) => rotuloDoTipo(o.type, o.correctiveType) },
+        ...(isClient ? [] : [{ label: "Tecnico", value: (o: MaintenanceWorkOrder) => o.technician?.name ?? "" }]),
+        { label: "Agendada", value: (o) => formatDate(o.scheduledDate) },
+        { label: "Status", value: (o) => statusLabel(o.status) },
+      ]);
+      downloadCsv(`ordens-de-manutencao-${new Date().toISOString().slice(0, 10)}.csv`, csv);
+    } finally {
+      setExporting(false);
+    }
+  }
 
   return (
     <div>
@@ -39,11 +82,16 @@ export default function WorkOrdersList() {
         description="OS preventivas e corretivas"
         breadcrumbs={[{ label: "RLP Maintenance CMMS", to: base }, { label: "Ordens" }]}
         actions={
-          canManage && (
-            <button className="btn-primary" onClick={() => navigate(`${base}/ordens/novo`)}>
-              <Plus className="h-4 w-4" /> Nova OS
+          <>
+            <button className="btn-outline" onClick={exportarCsv} disabled={exporting}>
+              <Download className="h-4 w-4" /> {exporting ? "Exportando..." : "Exportar CSV"}
             </button>
-          )
+            {canManage && (
+              <button className="btn-primary" onClick={() => navigate(`${base}/ordens/novo`)}>
+                <Plus className="h-4 w-4" /> Nova OS
+              </button>
+            )}
+          </>
         }
       />
 

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { areaComCentroDeCusto } from "../../../lib/centroDeCusto";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Pencil, Trash2, Plus, AlertTriangle } from "lucide-react";
+import { Pencil, Trash2, Plus, AlertTriangle, QrCode } from "lucide-react";
 import { deleteInstrument, getInstrument, listAssetParts, addAssetPart, removeAssetPart, getInstrumentPartsHistory, getInstrumentCostSummary } from "../../../api/instruments";
 import { listMeters, addMeterReading } from "../../../api/meters";
 import { listMaintenancePlans } from "../../../api/maintenancePlans";
@@ -20,6 +20,7 @@ import { AssetSetupAlerts } from "../../../components/AssetSetupAlerts";
 import { AssetLubricationCard } from "../../../components/AssetLubricationCard";
 import { InstrumentAttachments } from "../../../components/InstrumentAttachments";
 import { ConfirmDialog } from "../../../components/ConfirmDialog";
+import { AssetQrModal } from "../../../components/AssetQrModal";
 import { useAuth } from "../../../auth/AuthContext";
 import { useToast } from "../../../components/Toast";
 import { getApiErrorMessage } from "../../../api/client";
@@ -53,6 +54,7 @@ export default function InstrumentDetail() {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [meterModalOpen, setMeterModalOpen] = useState(false);
+  const [qrOpen, setQrOpen] = useState(false);
   const [selectedSparePartId, setSelectedSparePartId] = useState("");
 
   const { data: instrument, isLoading, refetch } = useQuery({ queryKey: ["instrument", id], queryFn: () => getInstrument(id) });
@@ -159,17 +161,30 @@ export default function InstrumentDetail() {
         description={`${instrument.description || instrument.type} · Cliente: ${clientDisplayName(instrument.client)}`}
         breadcrumbs={[{ label: "Ativos", to: "/gestao/instrumentos" }, { label: instrument.tag ?? instrument.type }]}
         actions={
-          canManage && (
-            <>
-              <button className="btn-outline" onClick={() => setEditOpen(true)}>
-                <Pencil className="h-4 w-4" /> Editar
-              </button>
-              <button className="btn-danger" onClick={() => setConfirmDelete(true)}>
-                <Trash2 className="h-4 w-4" /> Remover
-              </button>
-            </>
-          )
+          <>
+            <button className="btn-outline" onClick={() => setQrOpen(true)}>
+              <QrCode className="h-4 w-4" /> QR Code
+            </button>
+            {canManage && (
+              <>
+                <button className="btn-outline" onClick={() => setEditOpen(true)}>
+                  <Pencil className="h-4 w-4" /> Editar
+                </button>
+                <button className="btn-danger" onClick={() => setConfirmDelete(true)}>
+                  <Trash2 className="h-4 w-4" /> Remover
+                </button>
+              </>
+            )}
+          </>
         }
+      />
+
+      <AssetQrModal
+        open={qrOpen}
+        onClose={() => setQrOpen(false)}
+        tag={instrument.tag}
+        description={instrument.description}
+        path={`/gestao/instrumentos/${instrument.id}`}
       />
 
       {instrument.parent && (

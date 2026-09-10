@@ -70,6 +70,11 @@ const STATUS_MAP: Record<string, { label: string; tone: Tone }> = {
   CRITICAL: { label: "Critica", tone: "red" },
 };
 
+/** Mesmo texto que o badge mostra, pra reaproveitar em CSV/relatorio sem duplicar o mapa. */
+export function statusLabel(status: string): string {
+  return STATUS_MAP[status]?.label ?? status;
+}
+
 export function StatusBadge({ status, label }: { status: string; label?: string }) {
   const meta = STATUS_MAP[status] ?? { label: label ?? status, tone: "graphite" as Tone };
   return (
