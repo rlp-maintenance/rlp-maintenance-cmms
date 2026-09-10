@@ -275,10 +275,18 @@ function renderOsBlock(os: MaintenanceWorkOrder, logoUrl: string | null): string
     </div>`;
 }
 
-function abrirImpressao(titulo: string, corpoHtml: string): void {
-  const janela = window.open("", "_blank", "width=880,height=1000");
-  if (!janela) return;
+/**
+ * Abre a janela em branco NA HORA do clique, antes de qualquer busca assincrona (logo do
+ * cliente, detalhe da OS). O Safari (e navegadores mobile em geral) so deixa window.open
+ * passar quando ele acontece direto dentro do gesto do usuario - um await antes quebra
+ * essa cadeia e o pop-up e' bloqueado sem aviso nenhum, como se o clique nao tivesse feito
+ * nada. Por isso abrir e preencher a janela viraram dois passos separados.
+ */
+export function abrirJanelaImpressao(): Window | null {
+  return window.open("", "_blank", "width=880,height=1000");
+}
 
+function abrirImpressao(janela: Window, titulo: string, corpoHtml: string): void {
   janela.document.write(`
     <html>
       <head>
@@ -299,17 +307,18 @@ function abrirImpressao(titulo: string, corpoHtml: string): void {
 }
 
 /**
- * Abre a OS numa janela a parte, formatada pra impressao, e ja dispara o dialogo de
+ * Preenche a OS (formatada pra impressao) na janela ja aberta e dispara o dialogo de
  * imprimir - o usuario escolhe uma impressora fisica ou "Salvar como PDF" no mesmo
- * dialogo do navegador, sem precisar de uma biblioteca de PDF no backend.
+ * dialogo do navegador, sem precisar de uma biblioteca de PDF no backend. A janela precisa
+ * ter sido aberta com abrirJanelaImpressao() direto no clique, antes de qualquer await.
  */
-export function imprimirOS(os: MaintenanceWorkOrder, logoUrl: string | null): void {
-  abrirImpressao(`OS ${os.number}`, renderOsBlock(os, logoUrl));
+export function imprimirOS(janela: Window, os: MaintenanceWorkOrder, logoUrl: string | null): void {
+  abrirImpressao(janela, `OS ${os.number}`, renderOsBlock(os, logoUrl));
 }
 
 /** Mesma coisa, para varias OS de uma vez - uma por pagina, um dialogo de impressao so. */
-export function imprimirVariasOS(ordens: MaintenanceWorkOrder[], logoUrl: string | null): void {
+export function imprimirVariasOS(janela: Window, ordens: MaintenanceWorkOrder[], logoUrl: string | null): void {
   const corpo = ordens.map((os) => renderOsBlock(os, logoUrl)).join("");
   const titulo = ordens.length === 1 ? `OS ${ordens[0].number}` : `${ordens.length} ordens de manutencao`;
-  abrirImpressao(titulo, corpo);
+  abrirImpressao(janela, titulo, corpo);
 }

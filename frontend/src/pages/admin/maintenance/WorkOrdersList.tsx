@@ -11,7 +11,7 @@ import { StatusBadge, statusLabel } from "../../../components/StatusBadge";
 import { clientDisplayName, formatDate } from "../../../lib/format";
 import { useCmms } from "../../../lib/cmms";
 import { buildCsv, downloadCsv } from "../../../lib/csvExport";
-import { imprimirVariasOS } from "../../../lib/printWorkOrder";
+import { imprimirVariasOS, abrirJanelaImpressao } from "../../../lib/printWorkOrder";
 import { useToast } from "../../../components/Toast";
 import { getApiErrorMessage } from "../../../api/client";
 
@@ -89,13 +89,16 @@ export default function WorkOrdersList() {
     });
   }
 
-  async function imprimirSelecionadas() {
+  async function imprimirSelecionadas(janela: Window) {
     setImprimindo(true);
     try {
       // Cada linha da lista traz so o resumo - checklist, pecas e mao de obra vem do
       // detalhe completo, que so a tela de uma OS busca normalmente.
       const ordens = await Promise.all(Array.from(selecionadas).map((id) => getMaintenanceWorkOrder(id)));
-      if (ordens.length === 0) return;
+      if (ordens.length === 0) {
+        janela.close();
+        return;
+      }
       let logoUrl: string | null = null;
       try {
         const client = isClient ? await getOwnClient() : await getClient(ordens[0].clientId);
@@ -103,8 +106,9 @@ export default function WorkOrdersList() {
       } catch {
         // Sem logo nao impede a impressao.
       }
-      imprimirVariasOS(ordens, logoUrl);
+      imprimirVariasOS(janela, ordens, logoUrl);
     } catch (error) {
+      janela.close();
       notify("error", getApiErrorMessage(error));
     } finally {
       setImprimindo(false);
@@ -120,7 +124,18 @@ export default function WorkOrdersList() {
         actions={
           <>
             {selecionadas.size > 0 && (
-              <button className="btn-outline" onClick={() => void imprimirSelecionadas()} disabled={imprimindo}>
+              <button
+                className="btn-outline"
+                disabled={imprimindo}
+                onClick={() => {
+                  const janela = abrirJanelaImpressao();
+                  if (!janela) {
+                    notify("error", "Nao foi possivel abrir a janela de impressao - verifique se o navegador esta bloqueando pop-ups.");
+                    return;
+                  }
+                  void imprimirSelecionadas(janela);
+                }}
+              >
                 <Printer className="h-4 w-4" /> {imprimindo ? "Preparando..." : `Imprimir selecionadas (${selecionadas.size})`}
               </button>
             )}
