@@ -10,6 +10,11 @@ import { PublicLayout } from "./layouts/PublicLayout";
 import Home from "./pages/public/Home";
 import Lubrication from "./pages/public/Lubrication";
 import AssetManagement from "./pages/public/AssetManagement";
+import PredictiveMaintenance from "./pages/public/PredictiveMaintenance";
+import TechnicalWarehouse from "./pages/public/TechnicalWarehouse";
+import FailuresRca from "./pages/public/FailuresRca";
+import ClientPortal from "./pages/public/ClientPortal";
+import Pricing from "./pages/public/Pricing";
 import Login from "./pages/auth/Login";
 import NotFound from "./pages/NotFound";
 
@@ -85,6 +90,11 @@ export default function App() {
             <Route path="/" element={<Home />} />
             <Route path="/lubrificacao" element={<Lubrication />} />
             <Route path="/gestao-de-ativos" element={<AssetManagement />} />
+            <Route path="/manutencao-preditiva" element={<PredictiveMaintenance />} />
+            <Route path="/almoxarifado-tecnico" element={<TechnicalWarehouse />} />
+            <Route path="/falhas-e-causa-raiz" element={<FailuresRca />} />
+            <Route path="/portal-do-cliente" element={<ClientPortal />} />
+            <Route path="/planos" element={<Pricing />} />
           </Route>
           <Route path="/entrar" element={<Login />} />
 

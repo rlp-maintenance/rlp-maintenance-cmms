@@ -11,7 +11,11 @@ const NAV_LINKS = [
 
 const RECURSOS_LINKS = [
   { to: "/gestao-de-ativos", label: "Gestão de ativos" },
+  { to: "/manutencao-preditiva", label: "Manutenção preditiva" },
+  { to: "/almoxarifado-tecnico", label: "Almoxarifado técnico" },
   { to: "/lubrificacao", label: "Lubrificação" },
+  { to: "/falhas-e-causa-raiz", label: "Falhas e causa raiz" },
+  { to: "/portal-do-cliente", label: "Portal do cliente" },
 ];
 
 export function PublicHeader() {
@@ -41,7 +45,7 @@ export function PublicHeader() {
               Funcionalidades <ChevronDown className="h-3.5 w-3.5" />
             </button>
             {recursosOpen && (
-              <div className="absolute left-0 top-full w-56 rounded-lg border border-gray-200 bg-white py-2 shadow-xl">
+              <div className="absolute left-0 top-full w-64 rounded-lg border border-gray-200 bg-white py-2 shadow-xl">
                 {emHome && (
                   <a
                     href="#funcionalidades"
@@ -69,6 +73,9 @@ export function PublicHeader() {
               {l.label}
             </a>
           ))}
+          <Link to="/planos" className="text-sm font-semibold text-graphite-700 transition-colors hover:text-navy-900">
+            Planos
+          </Link>
         </nav>
 
         <div className="hidden items-center gap-6 md:flex">
@@ -110,6 +117,9 @@ export function PublicHeader() {
                 {l.label}
               </a>
             ))}
+            <Link to="/planos" className="text-sm font-semibold text-graphite-700" onClick={() => setOpen(false)}>
+              Planos
+            </Link>
             <Link to="/entrar" className="text-sm font-semibold text-graphite-700" onClick={() => setOpen(false)}>
               Entrar
             </Link>

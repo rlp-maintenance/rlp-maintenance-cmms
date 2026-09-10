@@ -32,11 +32,13 @@ const FEATURES = [
     icon: Radar,
     title: "Manutenção preditiva",
     description: "Medidores de condição com zonas de severidade disparam ordens automaticamente antes da quebra acontecer.",
+    to: "/manutencao-preditiva",
   },
   {
     icon: Boxes,
     title: "Almoxarifado técnico",
     description: "Peças por empresa, lista de materiais por ativo (BOM), reserva automática e alerta de estoque baixo.",
+    to: "/almoxarifado-tecnico",
   },
   {
     icon: Droplets,
@@ -48,11 +50,13 @@ const FEATURES = [
     icon: ListChecks,
     title: "Falhas e causa raiz",
     description: "Códigos de falha padronizados, análise de Pareto e RCA para parar de resolver o mesmo problema todo mês.",
+    to: "/falhas-e-causa-raiz",
   },
   {
     icon: Users,
     title: "Portal do cliente",
     description: "Cada empresa acessa só o próprio parque, com perfis por função: administrador, planejador, técnico e solicitante.",
+    to: "/portal-do-cliente",
   },
 ];
 
