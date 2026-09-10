@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Pencil, Trash2, Gauge, ClipboardList, FileSignature, Star, KeyRound, UserPlus } from "lucide-react";
+import { Pencil, Trash2, Gauge, ShieldCheck, ClipboardList, KeyRound, UserPlus } from "lucide-react";
 import { deleteClient, getClient } from "../../../api/clients";
+import { listMaintenancePlans } from "../../../api/maintenancePlans";
+import { listMaintenanceWorkOrders } from "../../../api/maintenanceWorkOrders";
 import { PageHeader } from "../../../components/PageHeader";
 import { FullPageSpinner } from "../../../components/Spinner";
 import { StatusBadge } from "../../../components/StatusBadge";
@@ -29,6 +31,19 @@ export default function ClientDetail() {
   const [portalAccessOpen, setPortalAccessOpen] = useState(false);
 
   const { data: client, isLoading } = useQuery({ queryKey: ["client", id], queryFn: () => getClient(id) });
+  // Indicadores reais de manutencao - substituem os antigos links de Ordens de
+  // servico/Contratos/Certificados, que apontavam pra rotas que nao existem mais desde
+  // que o CMMS virou produto proprio (o backend nem manda mais essas contagens).
+  const { data: plansPage } = useQuery({
+    queryKey: ["client-plans-count", id],
+    queryFn: () => listMaintenancePlans({ clientId: id, pageSize: 1 }),
+    enabled: !!id,
+  });
+  const { data: workOrdersPage } = useQuery({
+    queryKey: ["client-work-orders-count", id],
+    queryFn: () => listMaintenanceWorkOrders({ clientId: id, pageSize: 1 }),
+    enabled: !!id,
+  });
 
   async function handleDelete() {
     setDeleting(true);
@@ -129,9 +144,8 @@ export default function ClientDetail() {
             <h2 className="mb-3 font-semibold text-navy-900">Resumo</h2>
             <div className="space-y-2 text-sm">
               <SummaryRow icon={Gauge} label="Ativos" value={client._count?.instruments ?? 0} to={`/gestao/instrumentos?clientId=${id}`} />
-              <SummaryRow icon={ClipboardList} label="Ordens de servico" value={client._count?.serviceOrders ?? 0} to={`/gestao/ordens-servico?clientId=${id}`} />
-              <SummaryRow icon={FileSignature} label="Contratos" value={client._count?.contracts ?? 0} to={`/gestao/contratos?clientId=${id}`} />
-              <SummaryRow icon={Star} label="Certificados" value={client._count?.calibrations ?? 0} to={`/gestao/calibracoes?clientId=${id}`} />
+              <SummaryRow icon={ShieldCheck} label="Planos preventivos" value={plansPage?.total ?? 0} to={`/gestao/manutencao/planos?clientId=${id}`} />
+              <SummaryRow icon={ClipboardList} label="Ordens de manutencao" value={workOrdersPage?.total ?? 0} to={`/gestao/manutencao/ordens?clientId=${id}`} />
             </div>
           </div>
 
@@ -147,7 +161,7 @@ export default function ClientDetail() {
             {!client.users || client.users.length === 0 ? (
               <p className="text-sm text-graphite-600">
                 Esta empresa ainda nao tem login no portal. Libere o acesso para que ela veja, pela area dos servicos
-                contratados, seus ativos, certificados, laudos, OS e contratos.
+                contratados, seus ativos, planos preventivos e ordens de manutencao.
               </p>
             ) : (
               <ul className="divide-y divide-gray-100">

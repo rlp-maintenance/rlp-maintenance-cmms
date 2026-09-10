@@ -105,7 +105,7 @@ export interface Client {
   contacts?: ClientContact[];
   /** Usuarios de portal (role CLIENT) ja vinculados a esta empresa. */
   users?: PortalUserRef[];
-  _count?: { instruments: number; serviceOrders: number; contracts: number; calibrations?: number; orders?: number };
+  _count?: { instruments: number };
   /** Marca da propria empresa - substitui a marca do RLP Maintenance no painel do CMMS dela. */
   logoUrl?: string | null;
 }
