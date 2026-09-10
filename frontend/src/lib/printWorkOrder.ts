@@ -19,6 +19,36 @@ const STATUS_LABELS: Record<string, string> = {
 const RESULT_LABELS: Record<string, string> = { PENDING: "Pendente", OK: "OK", NOT_OK: "Nao OK", NA: "N/A" };
 const HOUR_TYPE_LABELS: Record<string, string> = { NORMAL: "Normal", OVERTIME: "Extra", NIGHT: "Noturna" };
 
+const ESTILO = `
+  * { box-sizing: border-box; }
+  body { font-family: system-ui, -apple-system, sans-serif; color: #1a2332; padding: 32px; max-width: 780px; margin: 0 auto; }
+  .os { padding-bottom: 8px; }
+  .os + .os { margin-top: 40px; padding-top: 40px; border-top: 2px dashed #d1d5db; page-break-before: always; }
+  .cabecalho { display: flex; align-items: center; justify-content: space-between; border-bottom: 3px solid #0b1e3a; padding-bottom: 16px; margin-bottom: 20px; }
+  .cabecalho img { max-height: 56px; max-width: 200px; object-fit: contain; }
+  .titulo-os { text-align: right; }
+  .titulo-os h1 { margin: 0; font-size: 20px; color: #0b1e3a; }
+  .titulo-os p { margin: 2px 0 0; font-size: 12px; color: #6b7280; }
+  .campos { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 24px; margin-bottom: 20px; }
+  .campo { display: flex; justify-content: space-between; border-bottom: 1px dotted #e5e7eb; padding: 4px 0; font-size: 13px; }
+  .rotulo { color: #6b7280; font-weight: 500; }
+  .valor { color: #1a2332; font-weight: 600; text-align: right; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.03em; color: #0b1e3a; border-bottom: 1px solid #0b1e3a; padding-bottom: 4px; margin: 22px 0 8px; }
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  th { text-align: left; background: #f3f4f6; padding: 6px 8px; font-weight: 600; }
+  td { padding: 6px 8px; border-bottom: 1px solid #f0f0f0; }
+  .texto { font-size: 13px; line-height: 1.5; white-space: pre-wrap; }
+  .assinaturas { display: flex; justify-content: space-between; margin-top: 60px; }
+  .assinatura { width: 45%; text-align: center; }
+  .assinatura .linha { border-top: 1px solid #1a2332; margin-bottom: 6px; }
+  .assinatura span { font-size: 11px; color: #6b7280; }
+  .rodape { margin-top: 40px; text-align: center; font-size: 10px; color: #9ca3af; }
+  @media print {
+    body { padding: 0; }
+    .os + .os { border-top: none; }
+  }
+`;
+
 function escapeHtml(value: string): string {
   return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
@@ -28,15 +58,9 @@ function linha(rotulo: string, valor: string | null | undefined): string {
   return `<div class="campo"><span class="rotulo">${rotulo}</span><span class="valor">${escapeHtml(valor)}</span></div>`;
 }
 
-/**
- * Abre a OS numa janela a parte, formatada pra impressao, e ja dispara o dialogo de
- * imprimir - o usuario escolhe uma impressora fisica ou "Salvar como PDF" no mesmo
- * dialogo do navegador, sem precisar de uma biblioteca de PDF no backend.
- */
-export function imprimirOS(os: MaintenanceWorkOrder, logoUrl: string | null): void {
-  const janela = window.open("", "_blank", "width=880,height=1000");
-  if (!janela) return;
-
+/** O conteudo de UMA OS, sem o involucro <html> - reaproveitado tanto na impressao de uma
+ * so quanto na de varias seguidas (uma por pagina). */
+function renderOsBlock(os: MaintenanceWorkOrder, logoUrl: string | null): string {
   const cliente = os.client ? clientDisplayName(os.client) : "";
   const ativo = os.instrument ? `${os.instrument.tag ?? os.instrument.type}${os.instrument.description ? ` - ${os.instrument.description}` : ""}` : "";
 
@@ -134,85 +158,84 @@ export function imprimirOS(os: MaintenanceWorkOrder, logoUrl: string | null): vo
     .map((x) => `<h2>${x.titulo}</h2><p class="texto">${escapeHtml(x.texto)}</p>`)
     .join("");
 
+  return `
+    <div class="os">
+      <div class="cabecalho">
+        ${logoUrl ? `<img src="${logoUrl}" alt="Logo" />` : `<div></div>`}
+        <div class="titulo-os">
+          <h1>Ordem de Manutencao</h1>
+          <p>Numero ${escapeHtml(os.number)}</p>
+        </div>
+      </div>
+
+      <div class="campos">
+        ${linha("Cliente", cliente)}
+        ${linha("Ativo", ativo)}
+        ${linha("Tipo", rotuloDoTipo(os.type, os.correctiveType))}
+        ${linha("Prioridade", PRIORITY_LABELS[os.priority] ?? os.priority)}
+        ${linha("Status", STATUS_LABELS[os.status] ?? os.status)}
+        ${linha("Tecnico responsavel", os.technician?.name)}
+        ${linha("Agendada para", os.scheduledDate ? formatDateTime(os.scheduledDate) : null)}
+        ${linha("Iniciada em", os.startedAt ? formatDateTime(os.startedAt) : null)}
+        ${linha("Concluida em", os.completedAt ? formatDateTime(os.completedAt) : null)}
+        ${linha("Centro de custo", os.costCenter?.name)}
+      </div>
+
+      <h2>Descricao do servico</h2>
+      <p class="texto">${escapeHtml(os.title ? `${os.title}\n\n${os.description}` : os.description)}</p>
+
+      ${checklistHtml}
+      ${pecasHtml}
+      ${maoDeObraHtml}
+      ${tercerizadosHtml}
+      ${observacoesHtml}
+
+      <div class="assinaturas">
+        <div class="assinatura">
+          <div class="linha"></div>
+          <span>Tecnico responsavel</span>
+        </div>
+        <div class="assinatura">
+          <div class="linha"></div>
+          <span>Cliente / Solicitante</span>
+        </div>
+      </div>
+    </div>`;
+}
+
+function abrirImpressao(titulo: string, corpoHtml: string): void {
+  const janela = window.open("", "_blank", "width=880,height=1000");
+  if (!janela) return;
+
   janela.document.write(`
     <html>
       <head>
-        <title>OS ${escapeHtml(os.number)}</title>
+        <title>${escapeHtml(titulo)}</title>
         <meta charset="utf-8" />
-        <style>
-          * { box-sizing: border-box; }
-          body { font-family: system-ui, -apple-system, sans-serif; color: #1a2332; padding: 32px; max-width: 780px; margin: 0 auto; }
-          .cabecalho { display: flex; align-items: center; justify-content: space-between; border-bottom: 3px solid #0b1e3a; padding-bottom: 16px; margin-bottom: 20px; }
-          .cabecalho img { max-height: 56px; max-width: 200px; object-fit: contain; }
-          .titulo-os { text-align: right; }
-          .titulo-os h1 { margin: 0; font-size: 20px; color: #0b1e3a; }
-          .titulo-os p { margin: 2px 0 0; font-size: 12px; color: #6b7280; }
-          .campos { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 24px; margin-bottom: 20px; }
-          .campo { display: flex; justify-content: space-between; border-bottom: 1px dotted #e5e7eb; padding: 4px 0; font-size: 13px; }
-          .rotulo { color: #6b7280; font-weight: 500; }
-          .valor { color: #1a2332; font-weight: 600; text-align: right; }
-          h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.03em; color: #0b1e3a; border-bottom: 1px solid #0b1e3a; padding-bottom: 4px; margin: 22px 0 8px; }
-          table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
-          th { text-align: left; background: #f3f4f6; padding: 6px 8px; font-weight: 600; }
-          td { padding: 6px 8px; border-bottom: 1px solid #f0f0f0; }
-          .texto { font-size: 13px; line-height: 1.5; white-space: pre-wrap; }
-          .assinaturas { display: flex; justify-content: space-between; margin-top: 60px; }
-          .assinatura { width: 45%; text-align: center; }
-          .assinatura .linha { border-top: 1px solid #1a2332; margin-bottom: 6px; }
-          .assinatura span { font-size: 11px; color: #6b7280; }
-          .rodape { margin-top: 40px; text-align: center; font-size: 10px; color: #9ca3af; }
-          @media print {
-            body { padding: 0; }
-          }
-        </style>
+        <style>${ESTILO}</style>
       </head>
       <body>
-        <div class="cabecalho">
-          ${logoUrl ? `<img src="${logoUrl}" alt="Logo" />` : `<div></div>`}
-          <div class="titulo-os">
-            <h1>Ordem de Manutencao</h1>
-            <p>Numero ${escapeHtml(os.number)}</p>
-          </div>
-        </div>
-
-        <div class="campos">
-          ${linha("Cliente", cliente)}
-          ${linha("Ativo", ativo)}
-          ${linha("Tipo", rotuloDoTipo(os.type, os.correctiveType))}
-          ${linha("Prioridade", PRIORITY_LABELS[os.priority] ?? os.priority)}
-          ${linha("Status", STATUS_LABELS[os.status] ?? os.status)}
-          ${linha("Tecnico responsavel", os.technician?.name)}
-          ${linha("Agendada para", os.scheduledDate ? formatDateTime(os.scheduledDate) : null)}
-          ${linha("Iniciada em", os.startedAt ? formatDateTime(os.startedAt) : null)}
-          ${linha("Concluida em", os.completedAt ? formatDateTime(os.completedAt) : null)}
-          ${linha("Centro de custo", os.costCenter?.name)}
-        </div>
-
-        <h2>Descricao do servico</h2>
-        <p class="texto">${escapeHtml(os.title ? `${os.title}\n\n${os.description}` : os.description)}</p>
-
-        ${checklistHtml}
-        ${pecasHtml}
-        ${maoDeObraHtml}
-        ${tercerizadosHtml}
-        ${observacoesHtml}
-
-        <div class="assinaturas">
-          <div class="assinatura">
-            <div class="linha"></div>
-            <span>Tecnico responsavel</span>
-          </div>
-          <div class="assinatura">
-            <div class="linha"></div>
-            <span>Cliente / Solicitante</span>
-          </div>
-        </div>
-
+        ${corpoHtml}
         <p class="rodape">Gerado pelo RLP Maintenance CMMS - ${escapeHtml(formatDateTime(new Date().toISOString()))}</p>
-
         <script>window.onload = () => window.print();</script>
       </body>
     </html>
   `);
   janela.document.close();
+}
+
+/**
+ * Abre a OS numa janela a parte, formatada pra impressao, e ja dispara o dialogo de
+ * imprimir - o usuario escolhe uma impressora fisica ou "Salvar como PDF" no mesmo
+ * dialogo do navegador, sem precisar de uma biblioteca de PDF no backend.
+ */
+export function imprimirOS(os: MaintenanceWorkOrder, logoUrl: string | null): void {
+  abrirImpressao(`OS ${os.number}`, renderOsBlock(os, logoUrl));
+}
+
+/** Mesma coisa, para varias OS de uma vez - uma por pagina, um dialogo de impressao so. */
+export function imprimirVariasOS(ordens: MaintenanceWorkOrder[], logoUrl: string | null): void {
+  const corpo = ordens.map((os) => renderOsBlock(os, logoUrl)).join("");
+  const titulo = ordens.length === 1 ? `OS ${ordens[0].number}` : `${ordens.length} ordens de manutencao`;
+  abrirImpressao(titulo, corpo);
 }

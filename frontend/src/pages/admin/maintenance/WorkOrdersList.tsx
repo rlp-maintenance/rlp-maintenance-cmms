@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Plus, Search, Download } from "lucide-react";
-import { listMaintenanceWorkOrders } from "../../../api/maintenanceWorkOrders";
+import { Plus, Search, Download, Printer } from "lucide-react";
+import { listMaintenanceWorkOrders, getMaintenanceWorkOrder } from "../../../api/maintenanceWorkOrders";
+import { getClient, getOwnClient } from "../../../api/clients";
 import type { MaintenanceOrderStatus, MaintenanceOrderType, MaintenanceWorkOrder } from "../../../api/types";
 import { PageHeader } from "../../../components/PageHeader";
 import { DataTable } from "../../../components/DataTable";
@@ -10,7 +11,9 @@ import { StatusBadge, statusLabel } from "../../../components/StatusBadge";
 import { clientDisplayName, formatDate } from "../../../lib/format";
 import { useCmms } from "../../../lib/cmms";
 import { buildCsv, downloadCsv } from "../../../lib/csvExport";
+import { imprimirVariasOS } from "../../../lib/printWorkOrder";
 import { useToast } from "../../../components/Toast";
+import { getApiErrorMessage } from "../../../api/client";
 
 import { rotuloDoTipo } from "../../../lib/maintenanceLabels";
 
@@ -34,6 +37,8 @@ export default function WorkOrdersList() {
   const [type, setType] = useState<MaintenanceOrderType | "">((searchParams.get("type") as MaintenanceOrderType) || "");
   const [page, setPage] = useState(1);
   const [exporting, setExporting] = useState(false);
+  const [selecionadas, setSelecionadas] = useState<Set<string>>(new Set());
+  const [imprimindo, setImprimindo] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ["maintenance-work-orders", search, status, type, page, clientId, instrumentId],
@@ -75,6 +80,37 @@ export default function WorkOrdersList() {
     }
   }
 
+  function alternarSelecao(id: string) {
+    setSelecionadas((atual) => {
+      const proximo = new Set(atual);
+      if (proximo.has(id)) proximo.delete(id);
+      else proximo.add(id);
+      return proximo;
+    });
+  }
+
+  async function imprimirSelecionadas() {
+    setImprimindo(true);
+    try {
+      // Cada linha da lista traz so o resumo - checklist, pecas e mao de obra vem do
+      // detalhe completo, que so a tela de uma OS busca normalmente.
+      const ordens = await Promise.all(Array.from(selecionadas).map((id) => getMaintenanceWorkOrder(id)));
+      if (ordens.length === 0) return;
+      let logoUrl: string | null = null;
+      try {
+        const client = isClient ? await getOwnClient() : await getClient(ordens[0].clientId);
+        logoUrl = client.logoUrl ?? null;
+      } catch {
+        // Sem logo nao impede a impressao.
+      }
+      imprimirVariasOS(ordens, logoUrl);
+    } catch (error) {
+      notify("error", getApiErrorMessage(error));
+    } finally {
+      setImprimindo(false);
+    }
+  }
+
   return (
     <div>
       <PageHeader
@@ -83,6 +119,11 @@ export default function WorkOrdersList() {
         breadcrumbs={[{ label: "RLP Maintenance CMMS", to: base }, { label: "Ordens" }]}
         actions={
           <>
+            {selecionadas.size > 0 && (
+              <button className="btn-outline" onClick={() => void imprimirSelecionadas()} disabled={imprimindo}>
+                <Printer className="h-4 w-4" /> {imprimindo ? "Preparando..." : `Imprimir selecionadas (${selecionadas.size})`}
+              </button>
+            )}
             <button className="btn-outline" onClick={exportarCsv} disabled={exporting}>
               <Download className="h-4 w-4" /> {exporting ? "Exportando..." : "Exportar CSV"}
             </button>
@@ -144,6 +185,19 @@ export default function WorkOrdersList() {
           )
         }
         columns={[
+          {
+            header: "",
+            className: "w-8",
+            accessor: (o) => (
+              <input
+                type="checkbox"
+                className="h-4 w-4 rounded border-gray-300"
+                checked={selecionadas.has(o.id)}
+                onClick={(e) => e.stopPropagation()}
+                onChange={() => alternarSelecao(o.id)}
+              />
+            ),
+          },
           { header: "Numero", accessor: (o) => <span className="font-medium text-navy-900">{o.number}</span> },
           ...(isClient ? [] : [{ header: "Cliente", accessor: (o: MaintenanceWorkOrder) => clientDisplayName(o.client) }]),
           { header: "Ativo", accessor: (o) => o.instrument?.tag ?? "-" },
