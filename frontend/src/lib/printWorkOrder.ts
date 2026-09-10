@@ -41,49 +41,52 @@ const HOUR_TYPE_LABELS: Record<string, string> = { NORMAL: "Normal", OVERTIME: "
 const LIME = "#c8e600";
 const NAVY = "#0b1e3a";
 
+// Design "outline": linhas finas e texto colorido em vez de fundo solido - o mesmo visual
+// moderno (cores da marca, cartoes, pilulas), mas sem chapar a folha de tinta em quem
+// imprime fisicamente. Cor solida vira excecao (so a linha de destaque, bem fina), nunca
+// area grande.
 const ESTILO = `
   * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  body { font-family: -apple-system, "Segoe UI", system-ui, sans-serif; color: #1a2332; margin: 0; background: #eef1f6; }
+  body { font-family: -apple-system, "Segoe UI", system-ui, sans-serif; color: #1a2332; margin: 0; background: #f3f4f7; }
   .pagina { max-width: 820px; margin: 0 auto; padding: 28px; }
-  .os { background: #fff; border-radius: 14px; overflow: hidden; box-shadow: 0 1px 3px rgba(11,30,58,0.12); margin-bottom: 28px; }
+  .os { background: #fff; border: 1px solid #e2e5ec; border-radius: 12px; overflow: hidden; margin-bottom: 28px; }
   .os + .os { page-break-before: always; }
 
-  .cabecalho { background: ${NAVY}; background-image: linear-gradient(135deg, ${NAVY} 0%, #142b52 100%); padding: 26px 30px; display: flex; align-items: center; justify-content: space-between; gap: 20px; position: relative; }
-  .cabecalho::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 4px; background: ${LIME}; }
+  .cabecalho { padding: 22px 28px 18px; display: flex; align-items: center; justify-content: space-between; gap: 20px; border-bottom: 2px solid ${NAVY}; position: relative; }
+  .cabecalho::after { content: ""; position: absolute; left: 0; right: 0; bottom: -3px; height: 3px; background: ${LIME}; }
   .marca { display: flex; align-items: center; gap: 14px; }
-  .marca .logo-caixa { background: #fff; border-radius: 10px; padding: 6px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(0,0,0,0.2); }
-  .marca img { display: block; max-height: 42px; max-width: 150px; object-fit: contain; }
-  .titulo-os { text-align: right; color: #fff; }
-  .titulo-os .eyebrow { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: ${LIME}; }
-  .titulo-os h1 { margin: 3px 0 4px; font-size: 22px; font-weight: 800; }
-  .titulo-os p { margin: 0; font-size: 12px; color: #b9c2d6; }
+  .marca .logo-caixa { border: 1px solid #e2e5ec; border-radius: 8px; padding: 5px; display: flex; align-items: center; justify-content: center; }
+  .marca img { display: block; max-height: 40px; max-width: 150px; object-fit: contain; }
+  .titulo-os { text-align: right; }
+  .titulo-os .eyebrow { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #7a8296; }
+  .titulo-os h1 { margin: 3px 0 4px; font-size: 21px; font-weight: 800; color: ${NAVY}; }
+  .titulo-os p { margin: 0; font-size: 12px; color: #7a8296; }
 
-  .faixa-status { display: flex; gap: 8px; padding: 14px 30px; background: #f6f8fb; border-bottom: 1px solid #e7ebf2; flex-wrap: wrap; }
-  .pill { display: inline-flex; align-items: center; gap: 5px; border-radius: 999px; padding: 4px 12px; font-size: 11.5px; font-weight: 700; color: #fff; }
-  .pill::before { content: ""; width: 6px; height: 6px; border-radius: 999px; background: currentColor; filter: brightness(1.6); }
+  .faixa-status { display: flex; gap: 8px; padding: 13px 28px; border-bottom: 1px solid #eceff4; flex-wrap: wrap; }
+  .pill { display: inline-flex; align-items: center; gap: 5px; border: 1.3px solid currentColor; border-radius: 999px; padding: 3px 11px; font-size: 11.5px; font-weight: 700; }
+  .pill::before { content: ""; width: 6px; height: 6px; border-radius: 999px; background: currentColor; }
 
-  .corpo { padding: 26px 30px 30px; }
+  .corpo { padding: 24px 28px 28px; }
 
-  .grade-info { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 26px; }
-  .info-item { background: #f6f8fb; border: 1px solid #eceff4; border-radius: 10px; padding: 10px 13px; }
+  .grade-info { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
+  .info-item { border: 1px solid #eceff4; border-left: 2.5px solid ${NAVY}; border-radius: 6px; padding: 9px 12px; }
   .info-item .rotulo { display: block; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #8b95a7; margin-bottom: 3px; }
   .info-item .valor { display: block; font-size: 13.5px; font-weight: 600; color: #1a2332; }
 
-  .secao { margin-bottom: 26px; }
-  .secao-titulo { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: ${NAVY}; margin-bottom: 10px; }
-  .secao-titulo::before { content: ""; width: 4px; height: 14px; background: ${LIME}; border-radius: 2px; }
+  .secao { margin-bottom: 24px; }
+  .secao-titulo { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: ${NAVY}; margin-bottom: 9px; }
+  .secao-titulo::before { content: ""; width: 4px; height: 13px; background: ${LIME}; border-radius: 2px; }
 
-  .descricao-caixa { background: #f6f8fb; border-left: 3px solid ${NAVY}; border-radius: 0 10px 10px 0; padding: 14px 18px; font-size: 13px; line-height: 1.6; white-space: pre-wrap; color: #2c3646; }
+  .descricao-caixa { border-left: 2.5px solid ${NAVY}; padding: 4px 0 4px 16px; font-size: 13px; line-height: 1.6; white-space: pre-wrap; color: #2c3646; }
 
-  table { width: 100%; border-collapse: collapse; font-size: 12.5px; border-radius: 8px; overflow: hidden; }
-  thead th { text-align: left; background: ${NAVY}; color: #fff; padding: 9px 12px; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.03em; }
-  tbody td { padding: 9px 12px; border-bottom: 1px solid #eceff4; }
-  tbody tr:nth-child(even) { background: #f9fafc; }
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  thead th { text-align: left; color: ${NAVY}; padding: 8px 10px; font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.03em; border-bottom: 1.5px solid ${NAVY}; }
+  tbody td { padding: 8px 10px; border-bottom: 1px solid #eceff4; }
   tbody tr:last-child td { border-bottom: none; }
 
   .texto { font-size: 13px; line-height: 1.6; white-space: pre-wrap; color: #2c3646; }
 
-  .assinaturas { display: flex; justify-content: space-between; gap: 24px; margin-top: 44px; padding-top: 4px; }
+  .assinaturas { display: flex; justify-content: space-between; gap: 24px; margin-top: 40px; padding-top: 4px; }
   .assinatura { flex: 1; text-align: center; }
   .assinatura .linha { border-top: 1.5px solid #c7cedb; margin-bottom: 8px; }
   .assinatura span { font-size: 11px; font-weight: 600; color: #6b7280; }
@@ -94,7 +97,7 @@ const ESTILO = `
   @media print {
     body { background: #fff; }
     .pagina { padding: 0; }
-    .os { box-shadow: none; border-radius: 0; margin-bottom: 0; }
+    .os { border: none; border-radius: 0; margin-bottom: 0; }
     .os + .os { margin-top: 0; }
   }
 `;
@@ -104,7 +107,7 @@ function escapeHtml(value: string): string {
 }
 
 function pill(texto: string, cor: string): string {
-  return `<span class="pill" style="background:${cor}">${escapeHtml(texto)}</span>`;
+  return `<span class="pill" style="color:${cor}">${escapeHtml(texto)}</span>`;
 }
 
 function infoItem(rotulo: string, valor: string | null | undefined): string {
@@ -276,18 +279,40 @@ function renderOsBlock(os: MaintenanceWorkOrder, logoUrl: string | null): string
 }
 
 /**
- * Abre a janela em branco NA HORA do clique, antes de qualquer busca assincrona (logo do
- * cliente, detalhe da OS). O Safari (e navegadores mobile em geral) so deixa window.open
- * passar quando ele acontece direto dentro do gesto do usuario - um await antes quebra
- * essa cadeia e o pop-up e' bloqueado sem aviso nenhum, como se o clique nao tivesse feito
- * nada. Por isso abrir e preencher a janela viraram dois passos separados.
+ * Imprime SEM abrir janela nova nem aba nova - um iframe escondido, anexado a propria
+ * pagina, recebe o documento e dispara o print() dele.
+ *
+ * A versao anterior usava window.open(): funciona em desktop, mas no Safari do iPhone
+ * (e em vários Android) fica na mao do usuario ter "Bloquear pop-ups" desligado nas
+ * configuracoes do navegador - e quando esta ligado (o padrao de fabrica), a janela nem
+ * chega a abrir, sem erro nenhum, como se o botao nao tivesse feito nada. Um iframe nao e'
+ * uma janela nova: nenhum bloqueador de pop-up entra em acao, e window.print() dentro dele
+ * abre a mesma folha de impressao nativa (imprimir ou "Salvar em PDF").
  */
-export function abrirJanelaImpressao(): Window | null {
-  return window.open("", "_blank", "width=880,height=1000");
-}
+function imprimirDocumento(titulo: string, corpoHtml: string): void {
+  const iframe = document.createElement("iframe");
+  iframe.style.position = "fixed";
+  iframe.style.right = "0";
+  iframe.style.bottom = "0";
+  iframe.style.width = "0";
+  iframe.style.height = "0";
+  iframe.style.border = "0";
+  iframe.setAttribute("aria-hidden", "true");
+  document.body.appendChild(iframe);
 
-function abrirImpressao(janela: Window, titulo: string, corpoHtml: string): void {
-  janela.document.write(`
+  function limpar() {
+    window.removeEventListener("afterprint", limpar);
+    if (iframe.parentNode) document.body.removeChild(iframe);
+  }
+
+  const doc = iframe.contentDocument;
+  if (!doc) {
+    limpar();
+    return;
+  }
+
+  doc.open();
+  doc.write(`
     <html>
       <head>
         <title>${escapeHtml(titulo)}</title>
@@ -299,26 +324,39 @@ function abrirImpressao(janela: Window, titulo: string, corpoHtml: string): void
           ${corpoHtml}
           <p class="rodape"><b>RLP Maintenance CMMS</b> - documento gerado em ${escapeHtml(formatDateTime(new Date().toISOString()))}</p>
         </div>
-        <script>window.onload = () => window.print();</script>
       </body>
     </html>
   `);
-  janela.document.close();
+  doc.close();
+
+  // Rede de seguranca: se o afterprint nunca disparar (usuario cancela de um jeito que o
+  // navegador nao avisa), o iframe some sozinho depois de um tempo, em vez de ficar preso
+  // na pagina pra sempre.
+  window.addEventListener("afterprint", limpar);
+  setTimeout(limpar, 120_000);
+
+  iframe.onload = () => {
+    try {
+      iframe.contentWindow?.focus();
+      iframe.contentWindow?.print();
+    } catch {
+      limpar();
+    }
+  };
 }
 
 /**
- * Preenche a OS (formatada pra impressao) na janela ja aberta e dispara o dialogo de
- * imprimir - o usuario escolhe uma impressora fisica ou "Salvar como PDF" no mesmo
- * dialogo do navegador, sem precisar de uma biblioteca de PDF no backend. A janela precisa
- * ter sido aberta com abrirJanelaImpressao() direto no clique, antes de qualquer await.
+ * Formata a OS pra impressao e dispara o dialogo nativo - o usuario escolhe uma impressora
+ * fisica ou "Salvar como PDF" no mesmo dialogo, sem precisar de biblioteca de PDF no
+ * backend nem de abrir janela/aba nova (ver imprimirDocumento).
  */
-export function imprimirOS(janela: Window, os: MaintenanceWorkOrder, logoUrl: string | null): void {
-  abrirImpressao(janela, `OS ${os.number}`, renderOsBlock(os, logoUrl));
+export function imprimirOS(os: MaintenanceWorkOrder, logoUrl: string | null): void {
+  imprimirDocumento(`OS ${os.number}`, renderOsBlock(os, logoUrl));
 }
 
 /** Mesma coisa, para varias OS de uma vez - uma por pagina, um dialogo de impressao so. */
-export function imprimirVariasOS(janela: Window, ordens: MaintenanceWorkOrder[], logoUrl: string | null): void {
+export function imprimirVariasOS(ordens: MaintenanceWorkOrder[], logoUrl: string | null): void {
   const corpo = ordens.map((os) => renderOsBlock(os, logoUrl)).join("");
   const titulo = ordens.length === 1 ? `OS ${ordens[0].number}` : `${ordens.length} ordens de manutencao`;
-  abrirImpressao(janela, titulo, corpo);
+  imprimirDocumento(titulo, corpo);
 }

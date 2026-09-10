@@ -43,7 +43,7 @@ import { useToast } from "../../../components/Toast";
 import { getApiErrorMessage } from "../../../api/client";
 import { clientDisplayName, formatDateTime, formatCurrency } from "../../../lib/format";
 import { getClient, getOwnClient } from "../../../api/clients";
-import { imprimirOS, abrirJanelaImpressao } from "../../../lib/printWorkOrder";
+import { imprimirOS } from "../../../lib/printWorkOrder";
 
 const RESULT_OPTIONS: { value: ChecklistItemResult; label: string; tone: string }[] = [
   { value: "OK", label: "OK", tone: "bg-green-50 text-safety-green-dark border-green-200" },
@@ -520,15 +520,15 @@ O que sobrar volta para o estoque.`,
   const thirdPartyCostKnown = (workOrder.thirdPartyServices ?? []).length > 0;
   const costSummaryKnown = partsCostKnown || laborCostKnown || thirdPartyCostKnown;
 
-  async function handlePrint(currentWorkOrder: MaintenanceWorkOrder, janela: Window) {
+  async function handlePrint(currentWorkOrder: MaintenanceWorkOrder) {
     try {
       // Portal (CLIENT*) so alcanca /clients/me; a equipe interna usa /clients/:id -
       // mesma logo, dois jeitos de pedir, conforme quem esta olhando a tela.
       const client = isClient ? await getOwnClient() : await getClient(currentWorkOrder.clientId);
-      imprimirOS(janela, currentWorkOrder, client.logoUrl ?? null);
+      imprimirOS(currentWorkOrder, client.logoUrl ?? null);
     } catch {
       // Sem logo nao impede a impressao - a OS sai sem marca, em vez de travar o botao.
-      imprimirOS(janela, currentWorkOrder, null);
+      imprimirOS(currentWorkOrder, null);
     }
   }
 
@@ -544,17 +544,7 @@ O que sobrar volta para o estoque.`,
         ]}
         actions={
           <>
-            <button
-              className="btn-outline"
-              onClick={() => {
-                const janela = abrirJanelaImpressao();
-                if (!janela) {
-                  notify("error", "Nao foi possivel abrir a janela de impressao - verifique se o navegador esta bloqueando pop-ups.");
-                  return;
-                }
-                void handlePrint(workOrder, janela);
-              }}
-            >
+            <button className="btn-outline" onClick={() => void handlePrint(workOrder)}>
               <Printer className="h-4 w-4" /> Imprimir / PDF
             </button>
             {canManage && (
