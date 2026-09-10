@@ -3,11 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Search } from "lucide-react";
 import { listClients } from "../../../api/clients";
-import type { ClientStatus, ServiceCategory } from "../../../api/types";
+import type { ClientStatus } from "../../../api/types";
 import { PageHeader } from "../../../components/PageHeader";
 import { DataTable } from "../../../components/DataTable";
 import { StatusBadge } from "../../../components/StatusBadge";
-import { clientDisplayName, formatServiceCategory, SERVICE_CATEGORY_OPTIONS } from "../../../lib/format";
+import { clientDisplayName } from "../../../lib/format";
 import { ClientFormModal } from "./ClientFormModal";
 import { useAuth } from "../../../auth/AuthContext";
 
@@ -19,7 +19,7 @@ export default function ClientsList() {
 
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<ClientStatus | "">("");
-  const [service, setService] = useState<ServiceCategory | "">("");
+  const [service, setService] = useState<"" | "CMMS_MAINTENANCE">("");
   const [page, setPage] = useState(1);
   const [createOpen, setCreateOpen] = useState(false);
 
@@ -69,17 +69,15 @@ export default function ClientsList() {
           <option value="PROSPECT">Prospecto</option>
         </select>
         <select
-          className="input sm:w-64"
+          className="input sm:w-56"
           value={service}
           onChange={(e) => {
-            setService(e.target.value as ServiceCategory | "");
+            setService(e.target.value as "" | "CMMS_MAINTENANCE");
             setPage(1);
           }}
         >
-          <option value="">Todos os servicos</option>
-          {SERVICE_CATEGORY_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>{opt.label}</option>
-          ))}
+          <option value="">Todos os clientes</option>
+          <option value="CMMS_MAINTENANCE">Com CMMS ativo</option>
         </select>
       </div>
 
@@ -96,18 +94,14 @@ export default function ClientsList() {
           { header: "Empresa", accessor: (c) => <span className="font-medium text-navy-900">{clientDisplayName(c)}</span> },
           { header: "Cidade", accessor: (c) => c.addressCity ?? "-" },
           {
-            header: "Servicos contratados",
+            header: "CMMS",
             accessor: (c) =>
-              c.contractedServices.length === 0 ? (
-                <span className="text-graphite-400">Nenhum</span>
+              c.contractedServices.includes("CMMS_MAINTENANCE") ? (
+                <span className="rounded-full border border-safety-green/40 bg-safety-green/10 px-2 py-0.5 text-[11px] font-medium text-safety-green-dark">
+                  Ativo
+                </span>
               ) : (
-                <div className="flex flex-wrap gap-1">
-                  {c.contractedServices.map((s) => (
-                    <span key={s} className="rounded-full border border-navy-200 bg-navy-50 px-2 py-0.5 text-[11px] font-medium text-navy-700">
-                      {formatServiceCategory(s)}
-                    </span>
-                  ))}
-                </div>
+                <span className="text-graphite-400">Nao ativado</span>
               ),
           },
           { header: "Plano", accessor: (c) => (c.plan ? <span className="text-xs font-medium text-navy-700">{c.plan.name}</span> : <span className="text-graphite-400">-</span>) },

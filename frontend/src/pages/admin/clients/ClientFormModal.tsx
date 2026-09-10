@@ -5,7 +5,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Modal } from "../../../components/Modal";
 import { TextInput, SelectInput, TextareaInput, CheckboxInput } from "../../../components/form/Field";
-import { SERVICE_CATEGORY_OPTIONS } from "../../../lib/format";
 import { createClient, updateClient } from "../../../api/clients";
 import { listPlans } from "../../../api/plans";
 import type { Client } from "../../../api/types";
@@ -29,21 +28,10 @@ const schema = z.object({
   technicalContactName: z.string().optional(),
   commercialContactName: z.string().optional(),
   status: z.enum(["ACTIVE", "INACTIVE", "PROSPECT"]),
-  contractedServices: z
-    .array(
-      z.enum([
-        "ELECTRICAL_MAINTENANCE",
-        "PANEL_MAINTENANCE",
-        "MOTOR_MAINTENANCE",
-        "TECHNICAL_REPORT",
-        "CALIBRATION",
-        "TECHNICAL_ASSISTANCE",
-        "EV_CHARGER",
-        "CMMS_MAINTENANCE",
-        "OTHER",
-      ]),
-    )
-    .optional(),
+  // Unico servico que este produto oferece - o enum ServiceCategory ainda tem os valores
+  // antigos da OptiProcess (calibracao, laudo...) por compatibilidade de banco, mas nada
+  // aqui deixa a equipe escolher entre eles: so existe CMMS.
+  usaCmms: z.boolean().optional(),
   planId: z.string().uuid().optional().or(z.literal("")),
   notes: z.string().optional(),
 });
@@ -66,7 +54,7 @@ export function ClientFormModal({ open, onClose, onSaved, client }: ClientFormMo
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { status: "PROSPECT", contractedServices: [] },
+    defaultValues: { status: "PROSPECT", usaCmms: true },
   });
 
   useEffect(() => {
@@ -90,18 +78,19 @@ export function ClientFormModal({ open, onClose, onSaved, client }: ClientFormMo
               technicalContactName: client.technicalContactName ?? "",
               commercialContactName: client.commercialContactName ?? "",
               status: client.status,
-              contractedServices: client.contractedServices ?? [],
+              usaCmms: (client.contractedServices ?? []).includes("CMMS_MAINTENANCE"),
               planId: client.planId ?? "",
               notes: client.notes ?? "",
             }
-          : { status: "PROSPECT", contractedServices: [] },
+          : { status: "PROSPECT", usaCmms: true },
       );
     }
   }, [open, client, reset]);
 
   async function onSubmit(values: FormValues) {
     try {
-      const payload = { ...values, planId: values.planId || null };
+      const { usaCmms, ...resto } = values;
+      const payload = { ...resto, planId: values.planId || null, contractedServices: usaCmms ? ["CMMS_MAINTENANCE" as const] : [] };
       const saved = client ? await updateClient(client.id, payload) : await createClient(payload);
       notify("success", client ? "Cliente atualizado." : "Cliente cadastrado.");
       onSaved(saved);
@@ -166,20 +155,10 @@ export function ClientFormModal({ open, onClose, onSaved, client }: ClientFormMo
           <TextInput label="Responsavel comercial" {...register("commercialContactName")} />
         </div>
         <div className="rounded-lg border border-gray-200 p-4">
-          <p className="field-label mb-2">Servicos contratados</p>
-          <p className="mb-3 text-xs text-graphite-500">
-            Marque as areas que este cliente contratou. Contratos com vigencia e valor sao cadastrados em Contratos.
+          <CheckboxInput label="Cliente usa o RLP Maintenance CMMS" {...register("usaCmms")} />
+          <p className="mt-1 text-xs text-graphite-500">
+            Desmarcado, o cliente fica sem acesso ao sistema (util para prospecto ainda nao ativado).
           </p>
-          <div className="grid gap-2 sm:grid-cols-2">
-            {SERVICE_CATEGORY_OPTIONS.map((opt) => (
-              <CheckboxInput
-                key={opt.value}
-                label={opt.label}
-                value={opt.value}
-                {...register("contractedServices")}
-              />
-            ))}
-          </div>
         </div>
 
         <TextareaInput label="Observacoes" rows={3} {...register("notes")} />
