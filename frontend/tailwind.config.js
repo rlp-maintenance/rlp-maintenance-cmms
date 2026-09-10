@@ -37,6 +37,13 @@ export default {
           "green-dark": "#0B7A44",
           red: "#D93025",
         },
+        // Verde-limao real do logotipo da RLP Maintenance (extraido do PNG oficial) -
+        // usado como cor de destaque no site de divulgacao, distinto do "safety.green"
+        // (verde semantico de status usado dentro do sistema).
+        brand: {
+          lime: "#B7D721",
+          "lime-dark": "#93AE1A",
+        },
       },
       fontFamily: {
         sans: ["Inter", "system-ui", "-apple-system", "Segoe UI", "Roboto", "sans-serif"],

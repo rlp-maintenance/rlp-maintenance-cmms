@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Menu, X } from "lucide-react";
+import { Menu, X, ArrowUpRight } from "lucide-react";
 import { CmmsLogo } from "../components/CmmsLogo";
 import { buildWhatsAppLink } from "../lib/publicContact";
 
@@ -14,26 +14,35 @@ export function PublicHeader() {
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-white/10 bg-navy-950/95 backdrop-blur">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-40 border-b border-white/10 bg-navy-950">
+      <div className="mx-auto flex h-[68px] max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link to="/" className="shrink-0" onClick={() => setOpen(false)}>
           <CmmsLogo variant="light" size="sm" />
         </Link>
 
-        <nav className="hidden items-center gap-8 md:flex">
+        <nav className="hidden items-center gap-9 md:flex">
           {NAV_LINKS.map((l) => (
-            <a key={l.href} href={l.href} className="text-sm font-medium text-navy-200 transition-colors hover:text-white">
+            <a
+              key={l.href}
+              href={l.href}
+              className="text-sm font-medium text-navy-200 transition-colors hover:text-white"
+            >
               {l.label}
             </a>
           ))}
         </nav>
 
-        <div className="hidden items-center gap-3 md:flex">
+        <div className="hidden items-center gap-5 md:flex">
           <Link to="/entrar" className="text-sm font-medium text-navy-200 transition-colors hover:text-white">
             Entrar
           </Link>
-          <a href={buildWhatsAppLink("Ola! Quero conhecer o RLP Maintenance CMMS.")} target="_blank" rel="noopener noreferrer" className="btn-primary text-sm">
-            Falar com a equipe
+          <a
+            href={buildWhatsAppLink("Ola! Quero conhecer o RLP Maintenance CMMS.")}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-brand-lime px-4 py-2.5 text-sm font-semibold text-navy-950 shadow-[0_0_0_1px_rgba(183,215,33,0.4)] transition-all hover:bg-brand-lime-dark hover:shadow-[0_0_24px_rgba(183,215,33,0.35)]"
+          >
+            Falar com a equipe <ArrowUpRight className="h-4 w-4" />
           </a>
         </div>
 
@@ -52,7 +61,12 @@ export function PublicHeader() {
         <div className="border-t border-white/10 bg-navy-950 px-4 py-4 md:hidden">
           <nav className="flex flex-col gap-4">
             {NAV_LINKS.map((l) => (
-              <a key={l.href} href={l.href} className="text-sm font-medium text-navy-200 hover:text-white" onClick={() => setOpen(false)}>
+              <a
+                key={l.href}
+                href={l.href}
+                className="text-sm font-medium text-navy-200 hover:text-white"
+                onClick={() => setOpen(false)}
+              >
                 {l.label}
               </a>
             ))}
@@ -63,9 +77,9 @@ export function PublicHeader() {
               href={buildWhatsAppLink("Ola! Quero conhecer o RLP Maintenance CMMS.")}
               target="_blank"
               rel="noopener noreferrer"
-              className="btn-primary justify-center text-sm"
+              className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-brand-lime px-4 py-2.5 text-sm font-semibold text-navy-950"
             >
-              Falar com a equipe
+              Falar com a equipe <ArrowUpRight className="h-4 w-4" />
             </a>
           </nav>
         </div>
